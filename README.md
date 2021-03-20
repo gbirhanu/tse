@@ -58,9 +58,9 @@ $dt_i = \textrm{the ith prediction}$
 
 After trying a lot of diffrent models I have got score of 0.73216 on Private data set and 0.72738 on Public dataset.
 
-!["Private Score"]("private_LB score.PNG")
+!["Private Score"](https://raw.githubusercontent.com/gbirhanu/tse/main/private_LB%20score.PNG)
 My score looks the following
-!["My score"]("my_private_score.PNG")
+!["My score"](https://raw.githubusercontent.com/gbirhanu/tse/main/my_private_score.PNG)
 
 ## Solution Overview
 
