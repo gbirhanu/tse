@@ -81,12 +81,12 @@ def get_char_preds(orders, len_train, len_test):
 
     n_models = len(config.MODELS)
 
-    for model, author in config.MODELS:
+    for model, seed in config.MODELS:
         with open(config.PKL_PATH + model + 'char_pred_oof_start.pkl', "rb") as fp:
             probas = pickle.load(fp)
 
-            if author != 'r0':
-                probas = reorder(orders[author], orders['r0'], probas)
+            if seed != 'r0':
+                probas = reorder(orders[seed], orders['r0'], probas)
 
 
             char_pred_oof_starts.append(probas)
@@ -94,8 +94,8 @@ def get_char_preds(orders, len_train, len_test):
         with open(config.PKL_PATH + model + 'char_pred_oof_end.pkl', "rb") as fp:
             probas = pickle.load(fp)
 
-            if author != 'r0':
-                probas = reorder(orders[author], orders['r0'], probas)
+            if seed != 'r0':
+                probas = reorder(orders[seed], orders['r0'], probas)
 
             char_pred_oof_ends.append(probas)
 
@@ -132,7 +132,7 @@ def get_test_char_preds(len_test):
 
     n_models = len(config.MODELS)
 
-    for model, author in config.MODELS:
+    for model, seed in config.MODELS:
 
 
         with open(config.PKL_PATH + model + 'char_pred_test_start.pkl', "rb") as fp:
