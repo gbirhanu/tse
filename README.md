@@ -58,9 +58,9 @@ $dt_i = \textrm{the ith prediction}$
 
 After trying a lot of diffrent models I have got score of 0.73216 on Private data set and 0.72738 on Public dataset.
 
-!["Private Score"]("private_LB score.PNG", "Leader board for private Dataset")
+!["Private Score"](https://raw.githubusercontent.com/gbirhanu/tse/main/private_LB%20score.PNG)
 My score looks the following
-!["My score"]("my_private_score.PNG", "my score")
+!["My score"](https://raw.githubusercontent.com/gbirhanu/tse/main/my_private_score.PNG)
 
 ## Solution Overview
 
@@ -85,7 +85,7 @@ The above problem is why we have [masked Languge Modelling](https://arxiv.org/ab
 
 I used [Stack Ensembling](https://www.sciencedirect.com/science/article/abs/pii/S0893608005800231) techinique to combine the first level model which is RoBERTa with diffrent seed. Here the input to this model is character level start and end probablities of given text. Then the data will be retrained to adjust those probablities. For this I used RNN(LSTM) model. The result is significantly increased as depicted in the above picture.
 In general the model looks like the following:<br>
-!["my Model"]("model.PNG", "My model")
+!["my Model"](https://raw.githubusercontent.com/gbirhanu/tse/main/model.PNG)
 
 ## Training:
 
