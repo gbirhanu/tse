@@ -85,7 +85,7 @@ The above problem is why we have [masked Languge Modelling](https://arxiv.org/ab
 
 I used [Stack Ensembling](https://www.sciencedirect.com/science/article/abs/pii/S0893608005800231) techinique to combine the first level model which is RoBERTa with diffrent seed. Here the input to this model is character level start and end probablities of given text. Then the data will be retrained to adjust those probablities. For this I used RNN(LSTM) model. The result is significantly increased as depicted in the above picture.
 In general the model looks like the following:<br>
-!["my Model"]("https://raw.githubusercontent.com/gbirhanu/tse/main/model.PNG")
+!["my Model"](https://raw.githubusercontent.com/gbirhanu/tse/main/model.PNG)
 
 ## Training:
 
