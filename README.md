@@ -43,11 +43,7 @@ def jaccard(str1, str2):
 
 The formula for the overall metric, then, is:
 
-<!-- $$
-score = \frac{1}{n} \sum_{i=1}^n jaccard( gt_i, dt_i )
-$$ -->
-
-<div align="center"><img style="background: white;" src="svg\KMVlfWFhzS.svg"></div>
+![Evaluation Formula][https://github.com/gbirhanu/tse/blob/main/formula.png?raw=true]
 
 Where :-
 
