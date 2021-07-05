@@ -43,7 +43,7 @@ def jaccard(str1, str2):
 
 The formula for the overall metric, then, is:
 
-![Evaluation Formula][https://github.com/gbirhanu/tse/blob/main/formula.png?raw=true]
+![Evaluation Formula](https://github.com/gbirhanu/tse/blob/main/formula.png?raw=true)
 
 Where :-
 
