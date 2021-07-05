@@ -47,7 +47,7 @@ The formula for the overall metric, then, is:
 score = \frac{1}{n} \sum\_{i=1}^n jaccard( gt_i, dt_i )
 $$ -->
 
-<div align="center"><img style="background: black;color:white" src="https://render.githubusercontent.com/render/math?math=score%20%3D%20%5Cfrac%7B1%7D%7Bn%7D%20%5Csum%5C_%7Bi%3D1%7D%5En%20jaccard(%20gt_i%2C%20dt_i%20)%0D"></div>
+<div align="center"><img style="background: inherit;" src="https://render.githubusercontent.com/render/math?math=score%20%3D%20%5Cfrac%7B1%7D%7Bn%7D%20%5Csum%5C_%7Bi%3D1%7D%5En%20jaccard(%20gt_i%2C%20dt_i%20)%0D"></div>
 
 Where :-
 
