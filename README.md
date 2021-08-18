@@ -4,7 +4,7 @@ Tweet sentiment extraction is a featured competition provided by Kaggle. The mai
 
 ## Challenge of the competition
 
-The main challenge for the competition comes from the nature of the data provided. The data is a tweet from any user from Twitter. And the supporting phrase is part of the original tweet which was selected by crowed workers of Appen company. When users select a supporting phrase they may select it in different ways. Some may include punctuation. Some may ignore punctuation.
+The main challenge for the competition comes from the nature of the data provided. The data is a tweet from any user from Twitter. And the supporting phrase is part of the original tweet which was selected by crowd workers of Appen company. When users select a supporting phrase they may select it in different ways. Some may include punctuation. Some may ignore punctuation.
 So the given task is to select appropriate text from the given tweet which supports the sentiment.
 
 ### Text and Selected_text relation
