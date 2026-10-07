@@ -1,4 +1,6 @@
-# Tweet Sentiement Mining, Extracting Sentiment supporting phrase from tweet
+# Tweet Sentiment Mining, Extracting Sentiment supporting phrase from tweet
+
+**How to run the code (updated 2026):** see [RUNNING.md](RUNNING.md). Everything runs from `main.py`; a Kaggle notebook is in `kaggle/`.
 
 Tweet sentiment extraction is a featured competition provided by Kaggle. The main task of this competition is, to extract the supporting phrase which helps us to state that the given tweet has positive, negative, or neutral sentiment. For example, if the tweet says "Today's meeting was very boring" the sentiment is negative and the word which makes it negative is "boring". That is what is asked by the competition.
 

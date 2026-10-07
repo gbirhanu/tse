@@ -1,49 +1,29 @@
-import pandas as pd
-from second_level_model import config , helper, train_routine,dataset
-import numpy as np 
-def run_inference():
-    df_train = pd.read_csv(
-        config.DATA_PATH + 'train.csv').dropna().reset_index(drop=True)
+"""Writes submission.csv from the level-one test predictions and the level-two models."""
+from first_level_model.lo_inference import read_test
+from second_level_model import config, helper, train_routine
 
-    df_test = pd.read_csv(config.DATA_PATH + 'test.csv').fillna('')
+
+def run_inference(args, paths, device):
+    df_test = read_test(paths, args.test_limit)
     df_test['selected_text'] = ''
-    sub = pd.read_csv(config.DATA_PATH + 'sample_submission.csv')
+    seeds = args.seeds
 
-    (char_pred_test_start,
-     char_pred_test_end) = helper.get_test_char_preds(len(df_test))
+    test_start, test_end = helper.load_char_preds(paths, seeds, 'test', list(df_test.textID))
 
-    tokenizer = config.TOKENIZER
-    tokenizer.fit_on_texts(df_train['text'].values)
+    # same character ids as in training (saved by the train2 step)
+    tokenizer = helper.CharTokenizer.load(paths.char_vocab_json)
+    X_test = helper.to_object_array(tokenizer.texts_to_sequences(df_test['text'].values))
+    preds = {'test_start': helper.to_object_array(test_start),
+             'test_end': helper.to_object_array(test_end)}
 
-    len_voc = len(tokenizer.word_index) + 1
-
-    X_test = tokenizer.texts_to_sequences(df_test['text'].values)
-
-    preds = {'test_start': np.array(char_pred_test_start),
-             'test_end': np.array(char_pred_test_end)}
-
-    pred_tests = train_routine.infer(df_test,
-                              np.array(X_test),
-                              preds, len_voc,
-                              k=config.N_FOLDS)
-
-
-    test_dataset = dataset.TweetCharDataset(df_test, X_test,
-                                            preds['test_start'],
-                                            preds['test_end'],
-                                            max_len=config.MAX_LEN,
-                                            train=False,
-                                            n_models=len(config.MODELS))
-
-    np.save("gb_rnn_preds.npy", np.array(pred_tests))
-
+    pred_tests, test_dataset = train_routine.infer(df_test, X_test, preds, len(tokenizer),
+                                                   len(seeds), paths, device,
+                                                   k=config.N_FOLDS)
     selected_texts = helper.string_from_preds_char_level(
-        test_dataset, pred_tests,
-        test=True, remove_neutral=config.REMOVE_NEUTRAL)
-    return selected_texts
-if __name__ == '__main__':
-    preds = run_inference()
-    sub_df = pd.read_csv('../input/tweet-sentiment-extraction/sample_submission.csv')
-    sub_df['selected_text'] = preds
-    sub_df.to_csv('submission.csv', index=False)
-    sub_df.head(25)
+        test_dataset, pred_tests, test=True, remove_neutral=config.REMOVE_NEUTRAL)
+
+    sub_df = df_test[['textID']].copy()
+    sub_df['selected_text'] = selected_texts
+    sub_df.to_csv(paths.submission_csv, index=False)
+    print(f'Wrote {paths.submission_csv} ({len(sub_df)} rows)')
+    return sub_df

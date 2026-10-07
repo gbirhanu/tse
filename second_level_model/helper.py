@@ -1,27 +1,80 @@
-from second_level_model import config
+import json
 import os
-import torch 
-import numpy as np
 import pickle
-def save_model_weights(model, filename, verbose=1, cp_folder=config.CP_PATH):
+
+import numpy as np
+import torch
+
+
+class CharTokenizer:
+    """
+    Character tokenizer. Replaces keras Tokenizer(char_level=True,
+    oov_token='UNK', lower=True), which is gone from Keras 3. Same ids:
+    index 1 = unknown, then characters from most to least frequent.
+    """
+
+    def __init__(self, oov_token='UNK'):
+        self.oov_token = oov_token
+        self.word_index = {}
+
+    def fit_on_texts(self, texts):
+        counts = {}
+        for text in texts:
+            for ch in str(text).lower():
+                counts[ch] = counts.get(ch, 0) + 1
+        ordered = sorted(counts.items(), key=lambda x: x[1], reverse=True)
+        vocab = [self.oov_token] + [ch for ch, _ in ordered]
+        self.word_index = {ch: i + 1 for i, ch in enumerate(vocab)}
+
+    def texts_to_sequences(self, texts):
+        oov = self.word_index[self.oov_token]
+        return [[self.word_index.get(ch, oov) for ch in str(text).lower()]
+                for text in texts]
+
+    def __len__(self):
+        return len(self.word_index) + 1   # + padding index 0
+
+    def save(self, path):
+        with open(path, 'w', encoding='utf-8') as fh:
+            json.dump({'oov_token': self.oov_token, 'word_index': self.word_index},
+                      fh, ensure_ascii=False)
+
+    @classmethod
+    def load(cls, path):
+        with open(path, encoding='utf-8') as fh:
+            data = json.load(fh)
+        tok = cls(data['oov_token'])
+        tok.word_index = data['word_index']
+        return tok
+
+
+def pad_sequences(sequences, maxlen):
+    """Post padding and post truncating with 0, as keras pad_sequences."""
+    out = np.zeros((len(sequences), maxlen), dtype=np.int64)
+    for i, seq in enumerate(sequences):
+        seq = list(seq)[:maxlen]
+        out[i, :len(seq)] = seq
+    return out
+
+
+def to_object_array(items):
+    """1-D numpy array of variable-length items (np.array fails on ragged lists)."""
+    arr = np.empty(len(items), dtype=object)
+    for i, item in enumerate(items):
+        arr[i] = item
+    return arr
+
+
+def save_model_weights(model, path, verbose=1):
     if verbose:
-        print(f"\n -> Saving weights to {os.path.join(cp_folder, filename)}\n")
-    torch.save(model.state_dict(), os.path.join(cp_folder, filename))
+        print(f"\n -> Saving weights to {path}\n")
+    torch.save(model.state_dict(), path)
 
 
-def load_model_weights(model, filename, verbose=1, cp_folder=config.CP_PATH):
-    try:
-        model.load_state_dict(os.path.join(cp_folder, filename), strict=True)
-    except FileNotFoundError:
-        model.load_state_dict(
-            torch.load(os.path.join(cp_folder, filename), map_location="cpu"),
-            strict=True,
-        )
-
+def load_model_weights(model, path, verbose=1):
+    model.load_state_dict(torch.load(path, map_location='cpu'), strict=True)
     if verbose:
-        print(
-            f"\n -> Loading weights from {os.path.join(cp_folder,filename)}\n")
-
+        print(f"\n -> Loading weights from {path}\n")
     return model
 
 
@@ -33,8 +86,7 @@ def unfreeze(model):
 def count_parameters(model, all=False):
     if all:
         return sum(p.numel() for p in model.parameters())
-    else:
-        return sum(p.numel() for p in model.parameters() if p.requires_grad)
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
 def jaccard(str1, str2):
@@ -42,135 +94,61 @@ def jaccard(str1, str2):
     a = set(str1.lower().split())
     b = set(str2.lower().split())
     c = a.intersection(b)
+    if len(a) + len(b) - len(c) == 0:
+        return 0.0
     return float(len(c)) / (len(a) + len(b) - len(c))
 
 
 def jaccard_from_logits_string(data, start_logits, end_logits):
     n = start_logits.size(0)
     score = 0
-
     start_logits = torch.softmax(start_logits, dim=1).cpu().detach().numpy()
     end_logits = torch.softmax(end_logits, dim=1).cpu().detach().numpy()
-
     for i in range(n):
         start_idx = np.argmax(start_logits[i])
         end_idx = np.argmax(end_logits[i])
         text = data["text"][i]
         pred = text[start_idx: end_idx]
-
         score += jaccard(data["selected_text"][i], pred)
-
     return score
 
 
-def reorder(order_source, order_target, preds):
-    order_source = list(order_source)
-    new_preds = []
-    for tgt_idx in order_target:
-        new_idx = order_source.index(tgt_idx)
-        new_preds.append(preds[new_idx])
+def load_char_preds(paths, seed_idxs, kind, text_ids):
+    """
+    Char-level probabilities of several level-one seeds, matched by textID.
+    Returns two lists (start, end) with one (len(text), n_seeds) array per text.
+    The 2021 code matched rows by position and re-sorted them; matching by
+    textID removes that step.
+    """
+    per_seed = []
+    for s in seed_idxs:
+        path = paths.oof_pkl(s) if kind == 'oof' else paths.test_pkl(s)
+        if not os.path.exists(path):
+            raise FileNotFoundError(f'{path} is missing. Run the level-one step first.')
+        with open(path, 'rb') as handle:
+            d = pickle.load(handle)
+        lookup = {tid: (st, en) for tid, st, en in zip(d['textID'], d['start'], d['end'])}
+        missing = [t for t in text_ids if t not in lookup]
+        if missing:
+            raise KeyError(f'{len(missing)} texts have no {kind} prediction in {path}')
+        per_seed.append([lookup[t] for t in text_ids])
 
-    return new_preds
-
-
-def get_char_preds(orders, len_train, len_test):
-    char_pred_oof_starts = []
-    char_pred_oof_ends = []
-    char_pred_test_starts = []
-    char_pred_test_ends = []
-
-    n_models = len(config.MODELS)
-
-    for model, seed in config.MODELS:
-        with open(config.PKL_PATH + model + 'char_pred_oof_start.pkl', "rb") as fp:
-            probas = pickle.load(fp)
-
-            if seed != 'r0':
-                probas = reorder(orders[seed], orders['r0'], probas)
-
-
-            char_pred_oof_starts.append(probas)
-
-        with open(config.PKL_PATH + model + 'char_pred_oof_end.pkl', "rb") as fp:
-            probas = pickle.load(fp)
-
-            if seed != 'r0':
-                probas = reorder(orders[seed], orders['r0'], probas)
-
-            char_pred_oof_ends.append(probas)
-
-        with open(config.PKL_PATH + model + 'char_pred_test_start.pkl', "rb") as fp:
-            probas = pickle.load(fp)
-
-            char_pred_test_starts.append(probas)
-
-        with open(config.PKL_PATH + model + 'char_pred_test_end.pkl', "rb") as fp:
-            probas = pickle.load(fp)
-
-
-            char_pred_test_ends.append(probas)
-
-    char_pred_oof_start = [np.concatenate(
-        [char_pred_oof_starts[m][i][:, np.newaxis]for m in range(n_models)],
-        1) for i in range(len_train)]
-    char_pred_oof_end = [np.concatenate(
-        [char_pred_oof_ends[m][i][:, np.newaxis] for m in range(n_models)],
-        1) for i in range(len_train)]
-    char_pred_test_start = [np.concatenate(
-        [char_pred_test_starts[m][i][:, np.newaxis] for m in range(n_models)],
-        1) for i in range(len_test)]
-    char_pred_test_end = [np.concatenate(
-        [char_pred_test_ends[m][i][:, np.newaxis] for m in range(n_models)],
-        1) for i in range(len_test)]
-
-    return (char_pred_oof_start, char_pred_oof_end,
-            char_pred_test_start, char_pred_test_end)
-def get_test_char_preds(len_test):
-
-    char_pred_test_starts = []
-    char_pred_test_ends = []
-
-    n_models = len(config.MODELS)
-
-    for model, seed in config.MODELS:
-
-
-        with open(config.PKL_PATH + model + 'char_pred_test_start.pkl', "rb") as fp:
-            probas = pickle.load(fp)
-
-            char_pred_test_starts.append(probas)
-
-        with open(config.PKL_PATH + model + 'char_pred_test_end.pkl', "rb") as fp:
-            probas = pickle.load(fp)
-
-
-            char_pred_test_ends.append(probas)
-
-
-    char_pred_test_start = [np.concatenate(
-        [char_pred_test_starts[m][i][:, np.newaxis] for m in range(n_models)],
-        1) for i in range(len_test)]
-    char_pred_test_end = [np.concatenate(
-        [char_pred_test_ends[m][i][:, np.newaxis] for m in range(n_models)],
-        1) for i in range(len_test)]
-
-    return (char_pred_test_start, char_pred_test_end)
+    n = len(seed_idxs)
+    starts = [np.stack([per_seed[m][i][0] for m in range(n)], 1) for i in range(len(text_ids))]
+    ends = [np.stack([per_seed[m][i][1] for m in range(n)], 1) for i in range(len(text_ids))]
+    return starts, ends
 
 
 def string_from_preds_char_level(dataset, preds, test=False,
-                                 remove_neutral=False, uncensored=False,
-                                 cleaned=False):
+                                 remove_neutral=False):
     selected_texts = []
     n_models = len(preds)
 
     for idx in range(len(dataset)):
         data = dataset[idx]
-
         if test:
-            start_probas = np.mean(
-                [preds[i][0][idx] for i in range(n_models)], 0)
-            end_probas = np.mean(
-                [preds[i][1][idx] for i in range(n_models)], 0)
+            start_probas = np.mean([preds[i][0][idx] for i in range(n_models)], 0)
+            end_probas = np.mean([preds[i][1][idx] for i in range(n_models)], 0)
         else:
             start_probas = preds[idx][0]
             end_probas = preds[idx][1]
@@ -192,39 +170,26 @@ def string_from_preds_char_level(dataset, preds, test=False,
 
 class LenMatchBatchSampler(torch.utils.data.sampler.BatchSampler):
     """
-    Custom PyTorch Sampler that generate batches of similar length.
-    Used alongside with trim_tensor, it helps speed up training.
+    Custom PyTorch Sampler that generates batches of similar length.
     """
 
     def __iter__(self):
-
-        buckets = [[]] * 100
-        yielded = 0
-
+        buckets = [[] for _ in range(100)]
         for idx in self.sampler:
             count_zeros = torch.sum(self.sampler.data_source[idx]['ids'] == 0)
             count_zeros = int(count_zeros / 64)
-            if len(buckets[count_zeros]) == 0:
-                buckets[count_zeros] = []
-
             buckets[count_zeros].append(idx)
-
             if len(buckets[count_zeros]) == self.batch_size:
-                batch = list(buckets[count_zeros])
-                yield batch
-                yielded += 1
+                yield list(buckets[count_zeros])
                 buckets[count_zeros] = []
 
         batch = []
         leftover = [idx for bucket in buckets for idx in bucket]
-
         for idx in leftover:
             batch.append(idx)
             if len(batch) == self.batch_size:
-                yielded += 1
                 yield batch
                 batch = []
 
         if len(batch) > 0 and not self.drop_last:
-            yielded += 1
             yield batch

@@ -1,0 +1,8 @@
+# Kaggle and Colab images already have these.
+torch>=2.0
+transformers>=4.30
+tokenizers>=0.13
+pandas>=1.5
+numpy>=1.23
+scikit-learn>=1.0
+tqdm

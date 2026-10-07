@@ -1,0 +1,8 @@
+work/
+work_*/
+data/
+*.bin
+*.pt
+*.pkl
+__pycache__/
+.ipynb_checkpoints/

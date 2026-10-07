@@ -1,44 +1,42 @@
-import torch
+import os
 import random
-import os 
+
 import numpy as np
+import torch
 
 """
-This are helper function for diffrent purposes 
+Helper functions for different purposes.
 """
-def seed_everything(seed_value): 
-    """
-    Use seed for random state to make results deterministic in diffrent 
-    execution time. 
-    """
+
+
+def seed_everything(seed_value):
+    """Fix random states so runs repeat."""
     random.seed(seed_value)
     np.random.seed(seed_value)
     torch.manual_seed(seed_value)
     os.environ['PYTHONHASHSEED'] = str(seed_value)
-    
-    if torch.cuda.is_available(): 
+    if torch.cuda.is_available():
         torch.cuda.manual_seed(seed_value)
         torch.cuda.manual_seed_all(seed_value)
         torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = True
-    
+        torch.backends.cudnn.benchmark = False
+
+
 def token_level_to_char_level(text, offsets, preds):
     """
-    This function accepts text(tweet) and offset of selected_text and probablity of each
-    token for being start and end tokend and give that to each character 
-    in the token
-    
+    Gives every character of the tweet the probability of the token it
+    belongs to (start or end probability).
     """
-    character_level_probablity  = np.zeros(len(text))
-    for loc, offset in enumerate(offsets):
-        if offset[0] or offset[1]:
-            character_level_probablity[offset[0]:offset[1]] = preds[loc]
-
+    offsets = np.asarray(offsets)
+    character_level_probablity = np.zeros(len(text))
+    for loc, (o0, o1) in enumerate(offsets):
+        if o0 or o1:
+            character_level_probablity[o0:o1] = preds[loc]
     return character_level_probablity
 
 
 def jaccard(str1, str2):
-    """This function implements the similarity metrics given in the competition"""
+    """The similarity metric given in the competition."""
     try:
         a = set(str1.lower().split())
         b = set(str2.lower().split())
@@ -48,10 +46,8 @@ def jaccard(str1, str2):
         return 0
 
 
-
-def get_best_start_end_idx(start_logits, end_logits,
-                           orig_start, orig_end):
-    """Return best start and end indices following BERT paper."""
+def get_best_start_end_idx(start_logits, end_logits, orig_start, orig_end):
+    """Best start and end indices (start <= end), following the BERT paper."""
     best_logit = -np.inf
     best_idxs = None
     start_logits = start_logits[orig_start:orig_end + 1]
@@ -66,12 +62,10 @@ def get_best_start_end_idx(start_logits, end_logits,
     return best_idxs
 
 
-def calculate_jaccard(original_tweet, target_string,
-                      start_logits, end_logits,
-                      orig_start, orig_end,
-                      offsets, 
-                      verbose=False):
-    """Calculate jaccard for local CV(cross validation)"""
+def decode_selected_text(original_tweet, start_logits, end_logits,
+                         orig_start, orig_end, offsets):
+    """Turns start/end token scores into the selected phrase."""
+    offsets = np.asarray(offsets)
     start_idx, end_idx = get_best_start_end_idx(
         start_logits, end_logits, orig_start, orig_end)
 
@@ -92,13 +86,21 @@ def calculate_jaccard(original_tweet, target_string,
 
     filtered_output = filtered_output.replace('ïï', 'ï')
     filtered_output = filtered_output.replace('¿¿', '¿')
+    return filtered_output.strip()
 
-    jac = jaccard(target_string.strip(), filtered_output.strip())
-    return jac
+
+def calculate_jaccard(original_tweet, target_string,
+                      start_logits, end_logits,
+                      orig_start, orig_end,
+                      offsets, verbose=False):
+    """Jaccard of one prediction, for local CV (cross validation)."""
+    pred = decode_selected_text(original_tweet, start_logits, end_logits,
+                                orig_start, orig_end, offsets)
+    return jaccard(target_string.strip(), pred)
 
 
 class AverageMeter:
-    """helps to calculate average of diffrent metrics and stores them"""
+    """Running average of a metric."""
 
     def __init__(self):
         self.reset()
@@ -114,3 +116,13 @@ class AverageMeter:
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
+
+
+def linear_schedule_with_warmup(optimizer, num_warmup_steps, num_training_steps):
+    """Same schedule as transformers.get_linear_schedule_with_warmup."""
+    def lr_lambda(step):
+        if step < num_warmup_steps:
+            return float(step) / float(max(1, num_warmup_steps))
+        return max(0.0, float(num_training_steps - step) /
+                   float(max(1, num_training_steps - num_warmup_steps)))
+    return torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
