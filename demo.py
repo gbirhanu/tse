@@ -11,6 +11,7 @@ weights come from work/models/model_XY.bin (level one) and work/level2/
 enough for a light demo; all 25 give the competition setup.
 """
 import argparse
+import json
 import os
 import sys
 
@@ -123,7 +124,13 @@ def main():
     p.add_argument('--sentiment', default=None, choices=['positive', 'negative', 'neutral'])
     args = p.parse_args()
 
-    extractor = Extractor(args.pretrained, args.work_dir, args.seeds, args.device,
+    seeds = args.seeds
+    scores_json = Paths(None, args.work_dir).scores_json
+    if seeds is None and os.path.exists(scores_json):
+        # use the same seeds as level two, if it has been trained
+        with open(scores_json) as fh:
+            seeds = json.load(fh).get('level2_seeds')
+    extractor = Extractor(args.pretrained, args.work_dir, seeds, args.device,
                           models_dir=args.models_dir)
     if args.text:
         show(extractor, args.text, args.sentiment or 'neutral')

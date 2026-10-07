@@ -45,8 +45,9 @@ def parse_args(argv=None):
                         'this can be local disk to save Drive space')
     p.add_argument('--pretrained', default=None,
                    help='RoBERTa folder (config.json, vocab.json, merges.txt, weights)')
-    p.add_argument('--seeds', type=int, nargs='+', default=list(range(len(c1.SEEDS))),
-                   help='which of the 5 seeds to use (0-4), default all')
+    p.add_argument('--seeds', type=int, nargs='+', default=None,
+                   help='which of the 5 seeds to use (0-4). Default: all five for level one; '
+                        'for train2 and predict, the seeds whose level-one outputs are ready')
     p.add_argument('--folds', type=int, nargs='+', default=None,
                    help='train only these level-one folds (to split work across sessions)')
     p.add_argument('--epochs', type=int, default=c1.EPOCHS, help='level-one epochs')
@@ -83,6 +84,10 @@ def main(argv=None):
     paths = Paths(args.data_dir, args.work_dir, args.pretrained, args.models_dir)
     paths.make_dirs()
     device = get_device(args.device)
+    if args.step in ('train2', 'predict'):
+        args.seeds = pick_level2_seeds(args, paths)
+    elif args.seeds is None:
+        args.seeds = list(range(len(c1.SEEDS)))
     print(f'Device: {device} | seeds: {args.seeds} | work dir: {args.work_dir}')
 
     for f in (paths.train_csv, paths.test_csv):
@@ -130,11 +135,44 @@ def main(argv=None):
         final_predict(args, paths, device)
 
 
-def _save_scores(paths, new):
-    scores = {}
+def ready_seeds(paths):
+    """Seeds whose level-one OOF (all 5 folds) and test predictions both exist."""
+    return [s for s in range(len(c1.SEEDS))
+            if os.path.exists(paths.oof_pkl(s)) and os.path.exists(paths.test_pkl(s))]
+
+
+def pick_level2_seeds(args, paths):
+    """Level two uses the seeds that are ready, unless --seeds says otherwise."""
+    ready = ready_seeds(paths)
+    trained_with = _load_scores(paths).get('level2_seeds')
+    if args.seeds is not None:
+        not_ready = [s for s in args.seeds if s not in ready]
+        if not_ready:
+            sys.exit(f'Seed(s) {not_ready} have not finished train1 and test1 yet. '
+                     f'Ready: {ready or "none"}. Leave out --seeds to use the ready ones.')
+        seeds = args.seeds
+    elif args.step == 'predict' and trained_with:
+        seeds = trained_with      # the seeds level two was trained on
+    else:
+        if not ready:
+            sys.exit('No seed has finished level one yet. Run train1 and test1 first.')
+        seeds = ready
+        print(f'Using the seeds that have finished level one: {seeds}')
+    if args.step == 'predict' and trained_with and sorted(seeds) != sorted(trained_with):
+        print(f'Note: level two was trained on seeds {trained_with}, '
+              f'predicting with {seeds}. Run train2 again to match.')
+    return seeds
+
+
+def _load_scores(paths):
     if os.path.exists(paths.scores_json):
         with open(paths.scores_json) as fh:
-            scores = json.load(fh)
+            return json.load(fh)
+    return {}
+
+
+def _save_scores(paths, new):
+    scores = _load_scores(paths)
     scores.update(new)
     with open(paths.scores_json, 'w') as fh:
         json.dump(scores, fh, indent=2)

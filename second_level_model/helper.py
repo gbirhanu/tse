@@ -124,7 +124,8 @@ def load_char_preds(paths, seed_idxs, kind, text_ids):
     for s in seed_idxs:
         path = paths.oof_pkl(s) if kind == 'oof' else paths.test_pkl(s)
         if not os.path.exists(path):
-            raise FileNotFoundError(f'{path} is missing. Run the level-one step first.')
+            step = 'train1 (all 5 folds)' if kind == 'oof' else 'test1'
+            raise FileNotFoundError(f'{path} is missing: seed {s} has not finished {step}.')
         with open(path, 'rb') as handle:
             d = pickle.load(handle)
         lookup = {tid: (st, en) for tid, st, en in zip(d['textID'], d['start'], d['end'])}
