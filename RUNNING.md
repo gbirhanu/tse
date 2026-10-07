@@ -36,6 +36,22 @@ Useful options:
 - `--fp16` uses mixed precision on a GPU (faster, less memory).
 - `--limit 1000 --test-limit 200` uses only the first rows, for a quick check.
 - `--legacy-target-shift` reproduces a 2021 bug (see below), for comparison.
+- `--save-fp16-weights` saves level-one models at half size (about 250 MB instead of 500 MB).
+- `--models-dir DIR` puts level-one models somewhere other than `work/models`.
+
+## On Google Colab with Google Drive
+
+1. Upload the whole `tse` folder to My Drive (the data is already in `tse/data`).
+2. Open `colab/train_on_colab.ipynb` in Colab, choose a T4 GPU, and run the cells.
+
+Outputs are written to `tse/work` on Drive, so nothing is lost when Colab disconnects;
+run the cells again and finished folds are skipped. Train one seed per session
+(`SEEDS = '0'`, then `'1'`, ...), then run level two once for all trained seeds.
+
+Drive space: 25 full-size models need about 12 GB, close to the free 15 GB.
+The notebook saves them at half size (about 6 GB). To keep them off Drive
+completely, set `MODELS = '/content/models'` and run `train1` and `test1` for a
+seed in the same session.
 
 ## On Kaggle
 

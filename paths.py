@@ -15,12 +15,12 @@ import os
 
 
 class Paths:
-    def __init__(self, data_dir=None, work_dir='work', pretrained=None):
+    def __init__(self, data_dir=None, work_dir='work', pretrained=None, models_dir=None):
         self.data_dir = data_dir
         self.work_dir = work_dir
         self.pretrained = pretrained
         self.folds_dir = os.path.join(work_dir, 'folds')
-        self.models_dir = os.path.join(work_dir, 'models')
+        self.models_dir = models_dir or os.path.join(work_dir, 'models')
         self.char_dir = os.path.join(work_dir, 'char_level')
         self.level2_dir = os.path.join(work_dir, 'level2')
 

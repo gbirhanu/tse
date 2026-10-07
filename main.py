@@ -40,6 +40,9 @@ def parse_args(argv=None):
     p.add_argument('--data-dir', default=default_data_dir(),
                    help='folder with train.csv and test.csv')
     p.add_argument('--work-dir', default='work', help='folder for all outputs')
+    p.add_argument('--models-dir', default=None,
+                   help='where level-one models go (default WORK_DIR/models); on Colab '
+                        'this can be local disk to save Drive space')
     p.add_argument('--pretrained', default=None,
                    help='RoBERTa folder (config.json, vocab.json, merges.txt, weights)')
     p.add_argument('--seeds', type=int, nargs='+', default=list(range(len(c1.SEEDS))),
@@ -52,6 +55,8 @@ def parse_args(argv=None):
     p.add_argument('--max-len', type=int, default=c1.MAX_LEN)
     p.add_argument('--level2-epochs', type=int, default=20)
     p.add_argument('--fp16', action='store_true', help='mixed precision on GPU (faster)')
+    p.add_argument('--save-fp16-weights', action='store_true',
+                   help='save level-one models in half precision (half the disk space)')
     p.add_argument('--device', default='auto', help="'cuda', 'cpu' or 'auto'")
     p.add_argument('--num-workers', type=int, default=2)
     p.add_argument('--limit', type=int, default=None,
@@ -75,7 +80,7 @@ def main(argv=None):
     args = parse_args(argv)
     if args.legacy_target_shift:
         c1.LEGACY_TARGET_SHIFT = True
-    paths = Paths(args.data_dir, args.work_dir, args.pretrained)
+    paths = Paths(args.data_dir, args.work_dir, args.pretrained, args.models_dir)
     paths.make_dirs()
     device = get_device(args.device)
     print(f'Device: {device} | seeds: {args.seeds} | work dir: {args.work_dir}')

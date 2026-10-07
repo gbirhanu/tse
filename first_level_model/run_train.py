@@ -63,7 +63,10 @@ def run_train(fold, folds_csv, seed_idx, args, paths, tokenizer, device):
         jaccard, char_start, char_end = train_routine_helper.eval_fn(
             valid_data_loader, model, device, fp16=args.fp16)
 
-    torch.save(model.state_dict(), paths.model_bin(seed_idx, fold))
+    state = model.state_dict()
+    if args.save_fp16_weights:   # half the file size (about 250 MB instead of 500 MB)
+        state = {k: v.half() if torch.is_floating_point(v) else v for k, v in state.items()}
+    torch.save(state, paths.model_bin(seed_idx, fold))
     with open(paths.oof_fold_pkl(seed_idx, fold), 'wb') as handle:
         pickle.dump({'textID': list(df_valid.textID.values),
                      'start': char_start, 'end': char_end,

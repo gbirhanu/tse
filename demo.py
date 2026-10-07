@@ -31,8 +31,8 @@ from second_level_model.train_routine import new_model, predict      # noqa: E40
 
 class Extractor:
     def __init__(self, pretrained, work_dir, seeds=None, device='cpu',
-                 max_len=c1.MAX_LEN):
-        self.paths = Paths(None, work_dir, pretrained)
+                 max_len=c1.MAX_LEN, models_dir=None):
+        self.paths = Paths(None, work_dir, pretrained, models_dir)
         self.device = torch.device(device)
         self.tokenizer = load_tokenizer(pretrained)
         self.max_len = max_len
@@ -116,13 +116,15 @@ def main():
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--pretrained', required=True)
     p.add_argument('--work-dir', default='work')
+    p.add_argument('--models-dir', default=None, help='default WORK_DIR/models')
     p.add_argument('--seeds', type=int, nargs='+', default=None)
     p.add_argument('--device', default='cpu')
     p.add_argument('--text', default=None)
     p.add_argument('--sentiment', default=None, choices=['positive', 'negative', 'neutral'])
     args = p.parse_args()
 
-    extractor = Extractor(args.pretrained, args.work_dir, args.seeds, args.device)
+    extractor = Extractor(args.pretrained, args.work_dir, args.seeds, args.device,
+                          models_dir=args.models_dir)
     if args.text:
         show(extractor, args.text, args.sentiment or 'neutral')
         return
