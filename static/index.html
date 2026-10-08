@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tweet phrase finder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F1F4F2;
+    --card: #FFFFFF;
+    --ink: #1F2D3A;
+    --ink-soft: #566472;
+    --line: #D2D9D5;
+    --focus: #2F6FED;
+    --pos: #C9F27A;
+    --neg: #FFB4C6;
+    --neu: #BCD6FF;
+    --mark-ink: #1F2D3A;
+    --error: #B42318;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #16202A;
+      --card: #1D2934;
+      --ink: #E7ECEF;
+      --ink-soft: #A3AFBA;
+      --line: #304050;
+      --focus: #7FA8FF;
+      --error: #FF8A80;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 17px;
+    line-height: 1.55;
+  }
+  main { max-width: 44rem; margin: 0 auto; padding: 3rem 1.25rem 4rem; }
+  h1 {
+    font-size: clamp(2rem, 6vw, 3.1rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    font-weight: 700;
+    font-variation-settings: "opsz" 96;
+    margin: 0 0 1rem;
+    max-width: 16ch;
+  }
+  .lede { margin: 0 0 0.5rem; max-width: 36rem; color: var(--ink-soft); }
+  .status { margin: 0 0 2.25rem; font-size: 0.875rem; color: var(--ink-soft); min-height: 1.4em; }
+  .status.bad { color: var(--error); }
+
+  form { display: grid; gap: 1.1rem; }
+  label.field { font-weight: 600; display: block; margin-bottom: 0.35rem; }
+  textarea, input[type=password] {
+    width: 100%;
+    font: inherit;
+    color: var(--ink);
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 0.8rem 0.9rem;
+  }
+  textarea { font-size: 1.15rem; line-height: 1.45; resize: vertical; min-height: 6.2rem; }
+  .row { display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: center; justify-content: space-between; }
+
+  fieldset { border: 0; margin: 0; padding: 0; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .choice input { position: absolute; opacity: 0; pointer-events: none; }
+  .choice span {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.5rem 0.95rem;
+    border: 1.5px solid var(--line);
+    border-radius: 999px;
+    background: var(--card);
+    cursor: pointer;
+    user-select: none;
+  }
+  .choice span::before {
+    content: ""; width: 0.95rem; height: 0.95rem; border-radius: 3px;
+    background: var(--swatch); box-shadow: inset 0 0 0 1px rgba(31,45,58,.15);
+  }
+  .choice input:checked + span { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); font-weight: 600; }
+  .choice input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+  @media (max-width: 440px) {
+    fieldset { gap: 0.35rem; }
+    .choice span { padding: 0.45rem 0.7rem; gap: 0.4rem; }
+    .go { width: 100%; }
+  }
+  .pos { --swatch: var(--pos); }
+  .neg { --swatch: var(--neg); }
+  .neu { --swatch: var(--neu); }
+
+  button { font: inherit; cursor: pointer; }
+  .go {
+    background: var(--ink); color: var(--paper);
+    border: 0; border-radius: 10px;
+    padding: 0.7rem 1.3rem; font-weight: 600;
+  }
+  .go[disabled] { opacity: 0.55; cursor: progress; }
+  :is(textarea, input, button, summary, a):focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .examples { font-size: 0.925rem; color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 0.4rem 0.6rem; align-items: baseline; }
+  .examples button {
+    background: none; border: 0; padding: 0; color: var(--ink);
+    text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; text-decoration-thickness: 2px;
+  }
+  .examples button:hover { text-decoration-color: var(--ink); }
+
+  .result {
+    margin-top: 2.5rem;
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 1.6rem 1.5rem 1.3rem;
+    min-height: 9rem;
+  }
+  .empty { color: var(--ink-soft); margin: 0; }
+  .tweet-out {
+    font-size: clamp(1.35rem, 3.6vw, 1.75rem);
+    line-height: 1.5;
+    font-weight: 500;
+    font-variation-settings: "opsz" 48;
+    margin: 0 0 1.1rem;
+    overflow-wrap: anywhere;
+  }
+  mark {
+    color: var(--mark-ink);
+    background-color: transparent;
+    background-image: linear-gradient(transparent 10%, var(--hl) 10%, var(--hl) 90%, transparent 90%);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    padding: 0 0.12em;
+    margin: 0 -0.06em;
+    border-radius: 0.2em;
+    -webkit-box-decoration-break: clone; box-decoration-break: clone;
+    animation: sweep 520ms cubic-bezier(.3,.7,.3,1) both;
+  }
+  mark[data-s=positive] { --hl: var(--pos); }
+  mark[data-s=negative] { --hl: var(--neg); }
+  mark[data-s=neutral]  { --hl: var(--neu); }
+  @keyframes sweep { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
+  @media (prefers-reduced-motion: reduce) { mark { animation: none; } }
+
+  .detail { margin: 0; font-size: 0.925rem; color: var(--ink-soft); }
+  .detail + .detail { margin-top: 0.3rem; }
+  .detail q { color: var(--ink); }
+  .error { color: var(--error); margin: 0; }
+
+  details { margin-top: 2.5rem; border-top: 1.5px solid var(--line); padding-top: 1.1rem; }
+  summary { cursor: pointer; font-weight: 600; }
+  details p { color: var(--ink-soft); font-size: 0.95rem; }
+  pre {
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 10px;
+    padding: 0.9rem 1rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.5;
+  }
+  details a { color: var(--ink); }
+  #keyrow[hidden] { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Find the words that carry the sentiment</h1>
+  <p class="lede">Type a tweet, say whether it is positive, negative or neutral, and the model marks the phrase that makes it so. Trained on the Kaggle Tweet Sentiment Extraction data.</p>
+  <p class="status" id="status" role="status">Connecting to the model…</p>
+
+  <form id="form" novalidate>
+    <div>
+      <label class="field" for="tweet">Tweet</label>
+      <textarea id="tweet" maxlength="280" rows="3" placeholder="my boss is bullying me..." required></textarea>
+    </div>
+    <div id="keyrow" hidden>
+      <label class="field" for="apikey">API key</label>
+      <input id="apikey" type="password" autocomplete="off" placeholder="Needed by this server">
+    </div>
+    <div class="row">
+      <fieldset>
+        <legend>Sentiment</legend>
+        <label class="choice pos"><input type="radio" name="sentiment" value="positive"><span>Positive</span></label>
+        <label class="choice neg"><input type="radio" name="sentiment" value="negative" checked><span>Negative</span></label>
+        <label class="choice neu"><input type="radio" name="sentiment" value="neutral"><span>Neutral</span></label>
+      </fieldset>
+      <button class="go" id="go" type="submit">Find the phrase</button>
+    </div>
+    <div class="examples">
+      <span>Try one:</span>
+      <button type="button" data-text="Sooo SAD I will miss you here in San Diego!!!" data-s="negative">Sooo SAD I will miss you…</button>
+      <button type="button" data-text="had a very good day and is now going to get into bed!" data-s="positive">had a very good day…</button>
+      <button type="button" data-text="I`d have responded, if I were going" data-s="neutral">I`d have responded…</button>
+    </div>
+  </form>
+
+  <section class="result" id="result" aria-live="polite">
+    <p class="empty">The marked phrase will appear here.</p>
+  </section>
+
+  <details>
+    <summary>Use the API</summary>
+    <p>Send a tweet and its sentiment as JSON. The answer gives the phrase and where it starts and ends in the text.</p>
+    <pre id="curl"></pre>
+    <pre>{"selected_text": "Sooo SAD", "start": 0, "end": 8,
+ "level1_text": "Sooo SAD", "level2_used": true, "ms": 41, ...}</pre>
+    <p>For many tweets at once, post <code>{"items": [...]}</code> to <code>api/extract_batch</code>. All endpoints are listed on the <a href="docs">API docs page</a>.</p>
+  </details>
+</main>
+
+<script>
+  const $ = (s) => document.querySelector(s);
+  const form = $('#form'), tweet = $('#tweet'), go = $('#go'), result = $('#result'), status = $('#status');
+  const endpoint = new URL('api/extract', location.href).href;
+  let authRequired = false;
+
+  $('#curl').textContent =
+    `curl -X POST ${endpoint} \\\n  -H "Content-Type: application/json" \\\n` +
+    `  -d '{"text": "Sooo SAD I will miss you here in San Diego!!!", "sentiment": "negative"}'`;
+
+  function esc(s) {
+    return s.replace(/[&<>"']/g, (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+  }
+
+  async function loadStatus() {
+    try {
+      const r = await fetch(new URL('api/health', location.href));
+      const h = await r.json();
+      const where = h.device.startsWith('cuda') ? 'GPU' : 'CPU';
+      const second = h.level2_models ? ` and ${h.level2_models} character model${h.level2_models > 1 ? 's' : ''}` : '';
+      status.textContent = `Ready: ${h.level1_models} RoBERTa model${h.level1_models > 1 ? 's' : ''}${second} on ${where}.`;
+      authRequired = h.auth_required;
+      $('#keyrow').hidden = !authRequired;
+      status.classList.remove('bad');
+    } catch (e) {
+      status.textContent = 'The model server is not answering. Check that serve.py is still running.';
+      status.classList.add('bad');
+    }
+  }
+
+  function show(res) {
+    const t = res.text;
+    let html;
+    if (res.start >= 0) {
+      html = esc(t.slice(0, res.start)) +
+             `<mark data-s="${res.sentiment}">${esc(t.slice(res.start, res.end))}</mark>` +
+             esc(t.slice(res.end));
+    } else {
+      html = esc(t);
+    }
+    let detail = `<p class="detail">Phrase: <q>${esc(res.selected_text)}</q></p>`;
+    if (res.level2_used && res.level1_text !== res.selected_text) {
+      detail += `<p class="detail">RoBERTa alone chose <q>${esc(res.level1_text)}</q>; the character model adjusted it.</p>`;
+    }
+    detail += `<p class="detail">Answered in ${res.ms} ms.</p>`;
+    result.innerHTML = `<p class="tweet-out">${html}</p>${detail}`;
+  }
+
+  function fail(msg) {
+    result.innerHTML = `<p class="error">${esc(msg)}</p>`;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = tweet.value.trim();
+    if (!text) { fail('Type a tweet first.'); tweet.focus(); return; }
+    const sentiment = form.querySelector('input[name=sentiment]:checked').value;
+    const headers = {'Content-Type': 'application/json'};
+    if (authRequired) headers['X-API-Key'] = $('#apikey').value;
+    go.disabled = true; go.textContent = 'Finding…';
+    try {
+      const r = await fetch(endpoint, {method: 'POST', headers, body: JSON.stringify({text, sentiment})});
+      const body = await r.json().catch(() => ({}));
+      if (r.status === 401) fail('This server needs an API key. Enter it above and try again.');
+      else if (!r.ok) fail(typeof body.detail === 'string' ? body.detail : `The server returned an error (${r.status}).`);
+      else show(body);
+    } catch (err) {
+      fail('The model server did not answer. Check that serve.py is still running.');
+    } finally {
+      go.disabled = false; go.textContent = 'Find the phrase';
+    }
+  });
+
+  document.querySelectorAll('.examples button').forEach((b) => {
+    b.addEventListener('click', () => {
+      tweet.value = b.dataset.text;
+      form.querySelector(`input[value=${b.dataset.s}]`).checked = true;
+      form.requestSubmit();
+    });
+  });
+
+  loadStatus();
+</script>
+</body>
+</html>

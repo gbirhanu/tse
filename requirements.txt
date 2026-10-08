@@ -6,3 +6,6 @@ pandas>=1.5
 numpy>=1.23
 scikit-learn>=1.0
 tqdm
+# only for serve.py (web page and API)
+fastapi
+uvicorn

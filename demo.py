@@ -32,16 +32,17 @@ from second_level_model.train_routine import new_model, predict      # noqa: E40
 
 class Extractor:
     def __init__(self, pretrained, work_dir, seeds=None, device='cpu',
-                 max_len=c1.MAX_LEN, models_dir=None):
+                 max_len=c1.MAX_LEN, models_dir=None, folds=None):
         self.paths = Paths(None, work_dir, pretrained, models_dir)
         self.device = torch.device(device)
         self.tokenizer = load_tokenizer(pretrained)
         self.max_len = max_len
 
         seeds = range(len(c1.SEEDS)) if seeds is None else seeds
+        folds = range(c1.N_FOLDS) if folds is None else folds
         self.level1 = {}
         for s in seeds:
-            files = [self.paths.model_bin(s, f) for f in range(c1.N_FOLDS)
+            files = [self.paths.model_bin(s, f) for f in folds
                      if os.path.exists(self.paths.model_bin(s, f))]
             if files:
                 self.level1[s] = [load_fold_model(pretrained, f, self.device) for f in files]
@@ -61,6 +62,8 @@ class Extractor:
                     m.eval()
                     self.level2.append(m)
         print(f'Level two: {len(self.level2)} model(s)')
+        self.info = {'seeds': list(self.level1), 'level1_models': n1,
+                     'level2_models': len(self.level2), 'device': str(self.device)}
 
     def _level1(self, text, sentiment):
         item = TweetDataset([text], [sentiment], [text], self.tokenizer, self.max_len)[0]
@@ -104,6 +107,15 @@ class Extractor:
         return answer1, answer2
 
 
+def level2_seeds(work_dir):
+    """The seeds level two was trained on (from scores.json), or None."""
+    path = Paths(None, work_dir).scores_json
+    if os.path.exists(path):
+        with open(path) as fh:
+            return json.load(fh).get('level2_seeds')
+    return None
+
+
 def show(extractor, text, sentiment):
     a1, a2 = extractor.extract(text, sentiment)
     print(f'\nTweet:      {text}\nSentiment:  {sentiment}')
@@ -119,19 +131,16 @@ def main():
     p.add_argument('--work-dir', default='work')
     p.add_argument('--models-dir', default=None, help='default WORK_DIR/models')
     p.add_argument('--seeds', type=int, nargs='+', default=None)
+    p.add_argument('--folds', type=int, nargs='+', default=None,
+                   help='load only these level-one folds (fewer = faster)')
     p.add_argument('--device', default='cpu')
     p.add_argument('--text', default=None)
     p.add_argument('--sentiment', default=None, choices=['positive', 'negative', 'neutral'])
     args = p.parse_args()
 
-    seeds = args.seeds
-    scores_json = Paths(None, args.work_dir).scores_json
-    if seeds is None and os.path.exists(scores_json):
-        # use the same seeds as level two, if it has been trained
-        with open(scores_json) as fh:
-            seeds = json.load(fh).get('level2_seeds')
+    seeds = args.seeds if args.seeds is not None else level2_seeds(args.work_dir)
     extractor = Extractor(args.pretrained, args.work_dir, seeds, args.device,
-                          models_dir=args.models_dir)
+                          models_dir=args.models_dir, folds=args.folds)
     if args.text:
         show(extractor, args.text, args.sentiment or 'neutral')
         return

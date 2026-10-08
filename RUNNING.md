@@ -81,6 +81,26 @@ python demo.py --pretrained ROBERTA_DIR --work-dir work --text "my boss is bully
 
 The demo prints the level-one answer and the final answer after level two.
 
+## Web page and API
+
+`serve.py` loads the same models and starts a web server (needs `pip install fastapi uvicorn`):
+
+```
+python serve.py --pretrained ROBERTA_DIR --work-dir work --port 8000
+```
+
+- `http://localhost:8000` is a web page: type a tweet, pick its sentiment, and the phrase is marked.
+- `POST /api/extract` with `{"text": "...", "sentiment": "negative"}` returns the phrase, its start and
+  end position in the text, the level-one answer and the time taken.
+- `POST /api/extract_batch` with `{"items": [...]}` handles up to 64 tweets at once.
+- `GET /api/health` says which models are loaded; `/docs` lists every endpoint.
+- Set the environment variable `TSE_API_KEY` to require an `X-API-Key` header.
+- `--folds 0` loads one model per seed: faster to start, uses less memory.
+
+On Colab, `colab/serve_on_colab.ipynb` starts the server, gives you a private link, and
+optionally a public link through a Cloudflare quick tunnel. Colab is not meant for running
+web services, so use the public link for short demos only.
+
 ## What changed from the 2021 code
 
 The repository did not run as committed. Fixed:
