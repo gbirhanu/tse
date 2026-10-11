@@ -1,0 +1,6 @@
+# Install PyTorch for your platform separately if a GPU build is needed.
+torch>=2.5,<3
+transformers==4.57.6
+numpy>=1.26,<3
+# CPU validation suite
+pytest>=8,<10

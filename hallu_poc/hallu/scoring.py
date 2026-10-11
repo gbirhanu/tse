@@ -29,8 +29,13 @@ def set_counts(pred, gold):
 
 
 def counts(preds, samples, kind='ld'):
+    if len(preds) != len(samples):
+        raise ValueError(f'{len(preds)} predictions do not match {len(samples)} samples.')
+    if kind not in ('ld', 'set'):
+        raise ValueError("Scorer kind must be 'ld' or 'set'.")
     fn = ld_counts if kind == 'ld' else set_counts
-    return np.array([fn(p, s['spans']) for p, s in zip(preds, samples)], dtype=np.float64)
+    return np.array([fn(p, s['spans']) for p, s in zip(preds, samples)],
+                    dtype=np.float64).reshape(-1, 3)
 
 
 def prf(c):
@@ -41,8 +46,8 @@ def prf(c):
     return prec, rec, f1
 
 
-def score(preds, samples, kind='ld'):
-    """{'all': (p, r, f1), 'qa': ..., 'summary': ..., 'data2text': ...} in percent."""
+def score(preds, samples, kind='ld', digits=2):
+    """Scores in percent; ``digits=None`` keeps raw precision for acceptance gates."""
     c = counts(preds, samples, kind)
     out = {}
     groups = {'all': np.ones(len(samples), bool)}
@@ -50,7 +55,8 @@ def score(preds, samples, kind='ld'):
         groups[task] = np.array([s['task'] == task for s in samples])
     for name, mask in groups.items():
         p, r, f = prf(c[mask].sum(0))
-        out[name] = (round(100 * float(p), 2), round(100 * float(r), 2), round(100 * float(f), 2))
+        values = (100 * float(p), 100 * float(r), 100 * float(f))
+        out[name] = values if digits is None else tuple(round(value, digits) for value in values)
     return out
 
 
@@ -60,11 +66,16 @@ def _source_index(samples):
     return np.array([pos[s['source_id']] for s in samples]), len(sources)
 
 
-def bootstrap(preds, samples, base_preds=None, kind='ld', n=1000, seed=0):
+def bootstrap(preds, samples, base_preds=None, kind='ld', n=1000, seed=0, digits=2):
     """
     95% interval of F1 (in points) by resampling sources with replacement.
     With base_preds: interval of F1(preds) - F1(base_preds) on the same resamples.
+    ``digits=None`` returns unrounded limits for strict positive-gain decisions.
     """
+    if not samples:
+        raise ValueError('Source bootstrap requires at least one sample.')
+    if not isinstance(n, (int, np.integer)) or isinstance(n, bool) or n < 1:
+        raise ValueError('The number of bootstrap resamples must be a positive integer.')
     idx, n_src = _source_index(samples)
     c = counts(preds, samples, kind)
     per_src = np.zeros((n_src, 3))
@@ -79,4 +90,5 @@ def bootstrap(preds, samples, base_preds=None, kind='ld', n=1000, seed=0):
     if base_preds is not None:
         f = f - prf(w @ per_src_b)[2]
     lo, hi = np.percentile(100 * f, [2.5, 97.5])
-    return round(float(lo), 2), round(float(hi), 2)
+    limits = float(lo), float(hi)
+    return limits if digits is None else tuple(round(value, digits) for value in limits)
