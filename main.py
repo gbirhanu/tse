@@ -7,6 +7,7 @@ Single entry point for the whole pipeline.
     python main.py oof1    ...   recompute OOF from saved level-one models
     python main.py test1   ...   level-one predictions on test.csv
     python main.py train2  ...   train level two (character RNN)
+    python main.py score2  ...   level-two scores from the saved models (no training)
     python main.py predict ...   write submission.csv
 
 DATA must hold train.csv and test.csv from the Kaggle competition.
@@ -25,7 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from first_level_model import config as c1          # noqa: E402
 from paths import Paths                               # noqa: E402
 
-STEPS = ['folds', 'train1', 'oof1', 'test1', 'train2', 'predict', 'all']
+STEPS = ['folds', 'train1', 'oof1', 'test1', 'train2', 'score2', 'predict', 'all']
 
 
 def default_data_dir():
@@ -84,7 +85,7 @@ def main(argv=None):
     paths = Paths(args.data_dir, args.work_dir, args.pretrained, args.models_dir)
     paths.make_dirs()
     device = get_device(args.device)
-    if args.step in ('train2', 'predict'):
+    if args.step in ('train2', 'score2', 'predict'):
         args.seeds = pick_level2_seeds(args, paths)
     elif args.seeds is None:
         args.seeds = list(range(len(c1.SEEDS)))
@@ -130,6 +131,10 @@ def main(argv=None):
         from second_level_model.lt_run import run_train as level2_train
         level2_train(args, paths, device)
 
+    if step == 'score2':
+        from second_level_model.lt_run import rebuild_scores
+        rebuild_scores(args, paths, device)
+
     if step in ('predict', 'all'):
         from second_level_model.final_inference import run_inference as final_predict
         final_predict(args, paths, device)
@@ -151,7 +156,7 @@ def pick_level2_seeds(args, paths):
             sys.exit(f'Seed(s) {not_ready} have not finished train1 and test1 yet. '
                      f'Ready: {ready or "none"}. Leave out --seeds to use the ready ones.')
         seeds = args.seeds
-    elif args.step == 'predict' and trained_with:
+    elif args.step in ('predict', 'score2') and trained_with:
         seeds = trained_with      # the seeds level two was trained on
     else:
         if not ready:

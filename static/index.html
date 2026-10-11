@@ -39,25 +39,24 @@
     background: var(--paper);
     color: var(--ink);
     font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
-    font-size: 17px;
-    line-height: 1.55;
+    font-size: 16px;
+    line-height: 1.5;
   }
-  main { max-width: 44rem; margin: 0 auto; padding: 3rem 1.25rem 4rem; }
+  main { max-width: 44rem; margin: 0 auto; padding: 1.5rem 1rem 1.5rem; }
   h1 {
-    font-size: clamp(2rem, 6vw, 3.1rem);
-    line-height: 1.05;
-    letter-spacing: -0.025em;
+    font-size: clamp(1.5rem, 3.8vw, 2.1rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
     font-weight: 700;
     font-variation-settings: "opsz" 96;
-    margin: 0 0 1rem;
-    max-width: 16ch;
+    margin: 0 0 0.35rem;
   }
-  .lede { margin: 0 0 0.5rem; max-width: 36rem; color: var(--ink-soft); }
-  .status { margin: 0 0 2.25rem; font-size: 0.875rem; color: var(--ink-soft); min-height: 1.4em; }
+  .lede { margin: 0; color: var(--ink-soft); }
+  .status { margin: 0.15rem 0 1rem; font-size: 0.85rem; color: var(--ink-soft); min-height: 1.3em; }
   .status.bad { color: var(--error); }
 
-  form { display: grid; gap: 1.1rem; }
-  label.field { font-weight: 600; display: block; margin-bottom: 0.35rem; }
+  form { display: grid; gap: 0.7rem; }
+  label.field { font-weight: 600; display: block; margin-bottom: 0.25rem; font-size: 0.95rem; }
   textarea, input[type=password] {
     width: 100%;
     font: inherit;
@@ -65,17 +64,17 @@
     background: var(--card);
     border: 1.5px solid var(--line);
     border-radius: 10px;
-    padding: 0.8rem 0.9rem;
+    padding: 0.6rem 0.8rem;
   }
-  textarea { font-size: 1.15rem; line-height: 1.45; resize: vertical; min-height: 6.2rem; }
-  .row { display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: center; justify-content: space-between; }
+  textarea { font-size: 1.1rem; line-height: 1.4; resize: vertical; min-height: 4.4rem; }
+  .row { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; justify-content: space-between; }
 
-  fieldset { border: 0; margin: 0; padding: 0; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  fieldset { border: 0; margin: 0; padding: 0; display: flex; gap: 0.45rem; flex-wrap: wrap; }
   legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   .choice input { position: absolute; opacity: 0; pointer-events: none; }
   .choice span {
-    display: inline-flex; align-items: center; gap: 0.5rem;
-    padding: 0.5rem 0.95rem;
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    padding: 0.4rem 0.85rem;
     border: 1.5px solid var(--line);
     border-radius: 999px;
     background: var(--card);
@@ -83,14 +82,14 @@
     user-select: none;
   }
   .choice span::before {
-    content: ""; width: 0.95rem; height: 0.95rem; border-radius: 3px;
+    content: ""; width: 0.9rem; height: 0.9rem; border-radius: 3px;
     background: var(--swatch); box-shadow: inset 0 0 0 1px rgba(31,45,58,.15);
   }
   .choice input:checked + span { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); font-weight: 600; }
   .choice input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
   @media (max-width: 440px) {
-    fieldset { gap: 0.35rem; }
-    .choice span { padding: 0.45rem 0.7rem; gap: 0.4rem; }
+    fieldset { gap: 0.3rem; }
+    .choice span { padding: 0.4rem 0.65rem; gap: 0.35rem; }
     .go { width: 100%; }
   }
   .pos { --swatch: var(--pos); }
@@ -101,12 +100,12 @@
   .go {
     background: var(--ink); color: var(--paper);
     border: 0; border-radius: 10px;
-    padding: 0.7rem 1.3rem; font-weight: 600;
+    padding: 0.55rem 1.2rem; font-weight: 600;
   }
   .go[disabled] { opacity: 0.55; cursor: progress; }
   :is(textarea, input, button, summary, a):focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
-  .examples { font-size: 0.925rem; color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 0.4rem 0.6rem; align-items: baseline; }
+  .examples { font-size: 0.9rem; color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 0.3rem 0.6rem; align-items: baseline; }
   .examples button {
     background: none; border: 0; padding: 0; color: var(--ink);
     text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; text-decoration-thickness: 2px;
@@ -114,20 +113,20 @@
   .examples button:hover { text-decoration-color: var(--ink); }
 
   .result {
-    margin-top: 2.5rem;
+    margin-top: 1.1rem;
     background: var(--card);
     border: 1.5px solid var(--line);
     border-radius: 14px;
-    padding: 1.6rem 1.5rem 1.3rem;
-    min-height: 9rem;
+    padding: 1rem 1.2rem;
+    min-height: 6.5rem;
   }
   .empty { color: var(--ink-soft); margin: 0; }
   .tweet-out {
-    font-size: clamp(1.35rem, 3.6vw, 1.75rem);
-    line-height: 1.5;
+    font-size: clamp(1.2rem, 3vw, 1.5rem);
+    line-height: 1.45;
     font-weight: 500;
     font-variation-settings: "opsz" 48;
-    margin: 0 0 1.1rem;
+    margin: 0 0 0.8rem;
     overflow-wrap: anywhere;
   }
   mark {
@@ -148,17 +147,20 @@
   @keyframes sweep { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
   @media (prefers-reduced-motion: reduce) { mark { animation: none; } }
 
-  .detail { margin: 0; font-size: 0.925rem; color: var(--ink-soft); }
-  .detail + .detail { margin-top: 0.3rem; }
-  .detail q { color: var(--ink); }
+  .conf { display: flex; align-items: center; gap: 0.75rem; }
+  .conf-label { font-weight: 600; font-size: 0.95rem; white-space: nowrap; }
+  .meter { flex: 1; height: 8px; border-radius: 4px; background: color-mix(in srgb, var(--ink) 14%, transparent); overflow: hidden; }
+  .meter span { display: block; height: 100%; border-radius: 4px; background: var(--ink); }
+  .conf-value { font-size: 1.3rem; font-weight: 650; font-variant-numeric: tabular-nums; min-width: 3.2rem; text-align: right; }
+  .note { margin: 0.35rem 0 0; font-size: 0.82rem; color: var(--ink-soft); }
   .error { color: var(--error); margin: 0; }
 
-  details { margin-top: 2.5rem; border-top: 1.5px solid var(--line); padding-top: 1.1rem; }
-  summary { cursor: pointer; font-weight: 600; }
-  details p { color: var(--ink-soft); font-size: 0.95rem; }
+  details { margin-top: 1rem; font-size: 0.9rem; }
+  summary { cursor: pointer; font-weight: 600; color: var(--ink-soft); }
+  details p { color: var(--ink-soft); }
   pre {
     background: var(--card); border: 1.5px solid var(--line); border-radius: 10px;
-    padding: 0.9rem 1rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.5;
+    padding: 0.8rem 1rem; overflow-x: auto; font-size: 0.82rem; line-height: 1.5;
   }
   details a { color: var(--ink); }
   #keyrow[hidden] { display: none; }
@@ -167,13 +169,13 @@
 <body>
 <main>
   <h1>Find the words that carry the sentiment</h1>
-  <p class="lede">Type a tweet, say whether it is positive, negative or neutral, and the model marks the phrase that makes it so. Trained on the Kaggle Tweet Sentiment Extraction data.</p>
+  <p class="lede">Type a tweet, pick its sentiment, and the model marks the phrase that carries it.</p>
   <p class="status" id="status" role="status">Connecting to the model…</p>
 
   <form id="form" novalidate>
     <div>
       <label class="field" for="tweet">Tweet</label>
-      <textarea id="tweet" maxlength="280" rows="3" placeholder="my boss is bullying me..." required></textarea>
+      <textarea id="tweet" maxlength="280" rows="2" placeholder="my boss is bullying me..." required></textarea>
     </div>
     <div id="keyrow" hidden>
       <label class="field" for="apikey">API key</label>
@@ -202,11 +204,10 @@
 
   <details>
     <summary>Use the API</summary>
-    <p>Send a tweet and its sentiment as JSON. The answer gives the phrase and where it starts and ends in the text.</p>
+    <p>Send a tweet and its sentiment as JSON. The answer gives the phrase, where it starts and ends in the text, and the model's confidence.</p>
     <pre id="curl"></pre>
-    <pre>{"selected_text": "Sooo SAD", "start": 0, "end": 8,
- "level1_text": "Sooo SAD", "level2_used": true, "ms": 41, ...}</pre>
-    <p>For many tweets at once, post <code>{"items": [...]}</code> to <code>api/extract_batch</code>. All endpoints are listed on the <a href="docs">API docs page</a>.</p>
+    <pre>{"selected_text": "Sooo SAD", "start": 0, "end": 8, "confidence": 0.62, "ms": 41, ...}</pre>
+    <p>For many tweets at once, post <code>{"items": [...]}</code> to <code>api/extract_batch</code>. All endpoints are on the <a href="docs">API docs page</a>.</p>
   </details>
 </main>
 
@@ -240,6 +241,11 @@
     }
   }
 
+  function percent(x) {
+    const p = Math.round(x * 100);
+    return p < 1 && x > 0 ? '<1%' : `${p}%`;
+  }
+
   function show(res) {
     const t = res.text;
     let html;
@@ -250,12 +256,13 @@
     } else {
       html = esc(t);
     }
-    let detail = `<p class="detail">Phrase: <q>${esc(res.selected_text)}</q></p>`;
-    if (res.level2_used && res.level1_text !== res.selected_text) {
-      detail += `<p class="detail">RoBERTa alone chose <q>${esc(res.level1_text)}</q>; the character model adjusted it.</p>`;
-    }
-    detail += `<p class="detail">Answered in ${res.ms} ms.</p>`;
-    result.innerHTML = `<p class="tweet-out">${html}</p>${detail}`;
+    const pct = Math.max(0, Math.min(100, Math.round(res.confidence * 100)));
+    result.innerHTML =
+      `<p class="tweet-out">${html}</p>` +
+      `<div class="conf"><span class="conf-label">Model confidence</span>` +
+      `<div class="meter" role="img" aria-label="${percent(res.confidence)}"><span style="width:${pct}%"></span></div>` +
+      `<span class="conf-value">${percent(res.confidence)}</span></div>` +
+      `<p class="note">How sure the model is about where the phrase starts and ends. Answered in ${res.ms} ms.</p>`;
   }
 
   function fail(msg) {

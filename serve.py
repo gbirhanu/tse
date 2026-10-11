@@ -5,8 +5,9 @@ Web page and API for the trained models.
 
 Then open http://localhost:8000 for the page. The API:
 
-    GET  /api/health                     what is loaded
+    GET  /api/health                     what is loaded, and the held-out scores
     POST /api/extract                    {"text": "...", "sentiment": "negative"}
+                                         add "answer": "..." to get its Jaccard score
     POST /api/extract_batch              {"items": [{"text": "...", "sentiment": "..."}, ...]}
 
 If the environment variable TSE_API_KEY is set, the /api/extract* calls need the
@@ -30,6 +31,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
 from demo import Extractor, level2_seeds   # noqa: E402
+from second_level_model.helper import jaccard   # noqa: E402
 
 Sentiment = Literal['positive', 'negative', 'neutral']
 
@@ -37,6 +39,9 @@ Sentiment = Literal['positive', 'negative', 'neutral']
 class Item(BaseModel):
     text: str = Field(..., min_length=1, max_length=280, description='the tweet')
     sentiment: Sentiment
+    answer: Optional[str] = Field(None, max_length=280,
+                                  description='the correct phrase, if you know it; '
+                                              'the reply then gives its Jaccard score')
 
 
 class Batch(BaseModel):
@@ -63,20 +68,26 @@ def create_app(extractor, api_key=None):
         t0 = time.perf_counter()
         try:
             with lock:
-                level1, final = extractor.extract(text, item.sentiment)
+                r = extractor.extract(text, item.sentiment)
         except ValueError:   # longer than the model's input size
             raise HTTPException(status_code=422,
                                 detail='The text is too long for the model. Tweets up to about '
                                        '100 tokens (roughly 280 characters of normal text) work.')
-        answer = final if final is not None else level1
+        answer = r['selected_text']
         start = text.find(answer) if answer else -1
+        given = (item.answer or '').strip()
         return {'text': text,
                 'sentiment': item.sentiment,
                 'selected_text': answer,
                 'start': start,
                 'end': start + len(answer) if start >= 0 else -1,
-                'level1_text': level1,
-                'level2_used': final is not None,
+                'level1_text': r['level1_text'],
+                'level2_used': r['level2_used'],
+                'confidence': round(r['confidence'], 4),
+                'estimated_jaccard': (round(r['estimated_jaccard'], 4)
+                                      if r['estimated_jaccard'] is not None else None),
+                'answer': given or None,
+                'jaccard': round(jaccard(answer, given), 4) if given else None,
                 'ms': round((time.perf_counter() - t0) * 1000)}
 
     @app.get('/', response_class=HTMLResponse, include_in_schema=False)
@@ -111,6 +122,9 @@ def main():
                    help='default: the seeds level two was trained on')
     p.add_argument('--folds', type=int, nargs='+', default=None,
                    help='load only these level-one folds (fewer = faster)')
+    p.add_argument('--data-dir', default=None,
+                   help='folder with train.csv, used once to build the score table if '
+                        'scores.json has none (default: a data folder next to WORK_DIR)')
     p.add_argument('--device', default='auto')
     p.add_argument('--host', default='0.0.0.0')
     p.add_argument('--port', type=int, default=8000)
@@ -121,7 +135,7 @@ def main():
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
     seeds = args.seeds if args.seeds is not None else level2_seeds(args.work_dir)
     extractor = Extractor(args.pretrained, args.work_dir, seeds, device,
-                          models_dir=args.models_dir, folds=args.folds)
+                          models_dir=args.models_dir, folds=args.folds, data_dir=args.data_dir)
     app = create_app(extractor, api_key=os.environ.get('TSE_API_KEY') or None)
     uvicorn.run(app, host=args.host, port=args.port)
 

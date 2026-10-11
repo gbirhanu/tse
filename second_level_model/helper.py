@@ -140,9 +140,13 @@ def load_char_preds(paths, seed_idxs, kind, text_ids):
     return starts, ends
 
 
-def string_from_preds_char_level(dataset, preds, test=False,
-                                 remove_neutral=False):
-    selected_texts = []
+def spans_from_preds(dataset, preds, test=False, remove_neutral=False):
+    """
+    The selected phrase of every text, and how sure the model is about it.
+    Confidence = P(start char) * P(end char), between 0 and 1. It is not an
+    accuracy; confidence_table() links it to the Jaccard of held-out tweets.
+    """
+    selected_texts, confidences = [], []
     n_models = len(preds)
 
     for idx in range(len(dataset)):
@@ -165,8 +169,49 @@ def string_from_preds_char_level(dataset, preds, test=False,
             selected_text = data["text"][start_idx: end_idx]
 
         selected_texts.append(selected_text.strip())
+        confidences.append(float(start_probas[start_idx] * end_probas[end_idx]))
 
-    return selected_texts
+    return selected_texts, confidences
+
+
+def string_from_preds_char_level(dataset, preds, test=False,
+                                 remove_neutral=False):
+    return spans_from_preds(dataset, preds, test, remove_neutral)[0]
+
+
+def confidence_table(sentiments, confidences, scores, n_bins=10):
+    """
+    From held-out (OOF) tweets: for each sentiment, split the confidence into
+    n_bins groups of equal size and keep the mean Jaccard of each group.
+    estimate_jaccard() then gives a new tweet the mean Jaccard of its group.
+    """
+    sentiments = np.asarray(sentiments)
+    confidences = np.asarray(confidences, dtype=float)
+    scores = np.asarray(scores, dtype=float)
+    table = {}
+    for s in sorted(set(sentiments)):
+        conf, jac = confidences[sentiments == s], scores[sentiments == s]
+        edges = np.unique(np.quantile(conf, np.linspace(0, 1, n_bins + 1))[1:-1])
+        group = np.searchsorted(edges, conf, side='right')
+        means, counts = [], []
+        for g in range(len(edges) + 1):
+            in_group = group == g
+            counts.append(int(in_group.sum()))
+            means.append(float(jac[in_group].mean()) if in_group.any() else None)
+        table[s] = {'edges': [float(e) for e in edges], 'jaccard': means, 'count': counts}
+    return table
+
+
+def estimate_jaccard(table, sentiment, confidence):
+    """Mean Jaccard of held-out tweets with this sentiment and a similar confidence."""
+    t = (table or {}).get(sentiment)
+    if not t:
+        return None
+    g = int(np.searchsorted(t['edges'], confidence, side='right'))
+    if t['jaccard'][g] is not None:
+        return t['jaccard'][g]
+    filled = [(abs(i - g), m) for i, m in enumerate(t['jaccard']) if m is not None]
+    return min(filled)[1] if filled else None
 
 
 class LenMatchBatchSampler(torch.utils.data.sampler.BatchSampler):

@@ -32,7 +32,7 @@ from second_level_model.train_routine import new_model, predict      # noqa: E40
 
 class Extractor:
     def __init__(self, pretrained, work_dir, seeds=None, device='cpu',
-                 max_len=c1.MAX_LEN, models_dir=None, folds=None):
+                 max_len=c1.MAX_LEN, models_dir=None, folds=None, data_dir=None):
         self.paths = Paths(None, work_dir, pretrained, models_dir)
         self.device = torch.device(device)
         self.tokenizer = load_tokenizer(pretrained)
@@ -62,8 +62,17 @@ class Extractor:
                     m.eval()
                     self.level2.append(m)
         print(f'Level two: {len(self.level2)} model(s)')
+
+        scores = {}
+        if os.path.exists(self.paths.scores_json):
+            with open(self.paths.scores_json) as fh:
+                scores = json.load(fh)
+        if self.level2 and 'level2_confidence_table' not in scores:
+            scores = build_score_table(work_dir, data_dir, scores, self.device) or scores
+        self.confidence_table = scores.get('level2_confidence_table') if self.level2 else None
         self.info = {'seeds': list(self.level1), 'level1_models': n1,
-                     'level2_models': len(self.level2), 'device': str(self.device)}
+                     'level2_models': len(self.level2), 'device': str(self.device),
+                     'validation': validation_scores(scores, list(self.level1))}
 
     def _level1(self, text, sentiment):
         item = TweetDataset([text], [sentiment], [text], self.tokenizer, self.max_len)[0]
@@ -91,20 +100,78 @@ class Extractor:
         end_logits = torch.stack(seed_end).mean(0)[0].cpu().numpy()
         answer = h1.decode_selected_text(text, start_logits, end_logits,
                                          item['orig_start'], item['orig_end'], offsets)
-        return answer, np.stack(char_start, 1), np.stack(char_end, 1)
+        s_idx, e_idx = h1.get_best_start_end_idx(start_logits, end_logits,
+                                                 item['orig_start'], item['orig_end'])
+        confidence = float(_softmax(start_logits)[s_idx] * _softmax(end_logits)[e_idx])
+        return answer, confidence, np.stack(char_start, 1), np.stack(char_end, 1)
 
     def extract(self, text, sentiment):
-        """Returns (level-one answer, level-one + level-two answer or None)."""
-        answer1, cs, ce = self._level1(text, sentiment)
+        """
+        Returns a dict:
+          selected_text      the answer (level two if loaded, else level one)
+          level1_text        the answer of the RoBERTa models alone
+          level2_used        True if level two made the answer
+          confidence         P(start) * P(end) of the answer, 0..1 (not an accuracy)
+          estimated_jaccard  mean Jaccard of held-out tweets with the same sentiment
+                             and a similar confidence (level two only), or None
+        """
+        answer1, conf1, cs, ce = self._level1(text, sentiment)
+        out = {'selected_text': answer1, 'level1_text': answer1, 'level2_used': False,
+               'confidence': conf1, 'estimated_jaccard': None}
         if not self.level2:
-            return answer1, None
+            return out
         df = pd.DataFrame({'text': [text], 'sentiment': [sentiment], 'selected_text': ['']})
         X = h2.to_object_array(self.char_tok.texts_to_sequences([text]))
         ds = TweetCharDataset(df, X, h2.to_object_array([cs]), h2.to_object_array([ce]),
                               n_models=cs.shape[1], max_len=c2.MAX_LEN, train=False)
         preds = [predict(m, ds, self.device, batch_size=1) for m in self.level2]
-        answer2 = h2.string_from_preds_char_level(ds, preds, test=True)[0]
-        return answer1, answer2
+        texts, confs = h2.spans_from_preds(ds, preds, test=True)
+        out.update(selected_text=texts[0], level2_used=True, confidence=confs[0],
+                   estimated_jaccard=h2.estimate_jaccard(self.confidence_table,
+                                                         sentiment, confs[0]))
+        return out
+
+
+def build_score_table(work_dir, data_dir, scores, device):
+    """
+    Runs made before the confidence table existed have none in scores.json.
+    Builds it once from the saved level-two models (same as main.py score2;
+    no training). Needs train.csv: DATA_DIR, or a 'data' folder next to WORK_DIR.
+    Returns the new scores, or None if it could not be built.
+    """
+    from types import SimpleNamespace
+    from second_level_model.lt_run import rebuild_scores
+
+    candidates = [data_dir] if data_dir else [
+        os.path.join(os.path.dirname(os.path.abspath(work_dir)), 'data'), 'data']
+    found = [d for d in candidates if os.path.exists(os.path.join(d, 'train.csv'))]
+    seeds = scores.get('level2_seeds')
+    if not found or not seeds:
+        print('No score table for the estimated Jaccard (train.csv or level2_seeds not found). '
+              'Run: python main.py score2 --data-dir DATA --work-dir WORK')
+        return None
+    print('Building the score table from the saved level-two models (once, no training)...')
+    try:
+        rebuild_scores(SimpleNamespace(limit=None, seeds=seeds),
+                       Paths(found[0], work_dir), device)
+    except Exception as err:   # the page still works, only without the estimate
+        print(f'Could not build the score table: {err}')
+        return None
+    with open(Paths(None, work_dir).scores_json) as fh:
+        return json.load(fh)
+
+
+def _softmax(x):
+    e = np.exp(x - np.max(x))
+    return e / e.sum()
+
+
+def validation_scores(scores, seeds):
+    """Jaccard on held-out training tweets, from scores.json."""
+    level1 = [v for s in seeds for v in scores.get(f'level1_seed{s}', {}).values()]
+    return {'level1_jaccard': float(np.mean(level1)) if level1 else None,
+            'level2_jaccard': scores.get('level2_cv_jaccard'),
+            'level2_by_sentiment': scores.get('level2_by_sentiment')}
 
 
 def level2_seeds(work_dir):
@@ -116,12 +183,18 @@ def level2_seeds(work_dir):
     return None
 
 
-def show(extractor, text, sentiment):
-    a1, a2 = extractor.extract(text, sentiment)
+def show(extractor, text, sentiment, answer=None):
+    r = extractor.extract(text, sentiment)
     print(f'\nTweet:      {text}\nSentiment:  {sentiment}')
-    print(f'Level one:  {a1}')
-    if a2 is not None:
-        print(f'Final:      {a2}')
+    print(f'Level one:  {r["level1_text"]}')
+    if r['level2_used']:
+        print(f'Final:      {r["selected_text"]}')
+    line = f'Confidence: {r["confidence"]:.2f}'
+    if r['estimated_jaccard'] is not None:
+        line += f'   estimated Jaccard: {r["estimated_jaccard"]:.2f}'
+    print(line)
+    if answer:
+        print(f'Jaccard with your answer: {h2.jaccard(r["selected_text"], answer):.2f}')
 
 
 def main():
@@ -136,13 +209,22 @@ def main():
     p.add_argument('--device', default='cpu')
     p.add_argument('--text', default=None)
     p.add_argument('--sentiment', default=None, choices=['positive', 'negative', 'neutral'])
+    p.add_argument('--answer', default=None,
+                   help='the correct phrase, if you know it: prints its Jaccard score')
+    p.add_argument('--data-dir', default=None,
+                   help='folder with train.csv, used once to build the score table '
+                        '(default: a data folder next to WORK_DIR)')
     args = p.parse_args()
 
     seeds = args.seeds if args.seeds is not None else level2_seeds(args.work_dir)
     extractor = Extractor(args.pretrained, args.work_dir, seeds, args.device,
-                          models_dir=args.models_dir, folds=args.folds)
+                          models_dir=args.models_dir, folds=args.folds, data_dir=args.data_dir)
+    v = extractor.info['validation']
+    best = v['level2_jaccard'] if extractor.level2 else v['level1_jaccard']
+    if best is not None:
+        print(f'Jaccard on held-out training tweets: {best:.4f}')
     if args.text:
-        show(extractor, args.text, args.sentiment or 'neutral')
+        show(extractor, args.text, args.sentiment or 'neutral', args.answer)
         return
     while True:
         text = input('\nTweet (empty line to quit): ').strip()

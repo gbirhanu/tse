@@ -26,6 +26,7 @@ python main.py all --data-dir DATA --pretrained ROBERTA_DIR --work-dir work
 | `oof1` | Out-of-fold predictions from saved models (only for models trained elsewhere) | `char_level/*-oof.pkl` |
 | `test1` | Level one on test.csv (5 folds averaged per seed) | `char_level/*-test.pkl` |
 | `train2` | Level two: character RNN on the level-one predictions, 5 folds | `level2/`, `scores.json` |
+| `score2` | Level-two scores again from the saved models, no training (only for older runs) | `scores.json` |
 | `predict` | Final predictions for test.csv | `submission.csv` |
 
 Useful options:
@@ -79,7 +80,8 @@ python demo.py --pretrained ROBERTA_DIR --work-dir work
 python demo.py --pretrained ROBERTA_DIR --work-dir work --text "my boss is bullying me..." --sentiment negative
 ```
 
-The demo prints the level-one answer and the final answer after level two.
+The demo prints the level-one answer, the final answer after level two, the confidence and
+the estimated Jaccard. Add `--answer "bullying me"` to also print the real Jaccard.
 
 ## Web page and API
 
@@ -91,11 +93,24 @@ python serve.py --pretrained ROBERTA_DIR --work-dir work --port 8000
 
 - `http://localhost:8000` is a web page: type a tweet, pick its sentiment, and the phrase is marked.
 - `POST /api/extract` with `{"text": "...", "sentiment": "negative"}` returns the phrase, its start and
-  end position in the text, the level-one answer and the time taken.
+  end position in the text, the level-one answer, the confidence, the estimated Jaccard and the time taken.
+  Add `"answer": "..."` (the correct phrase) to also get its real Jaccard score.
 - `POST /api/extract_batch` with `{"items": [...]}` handles up to 64 tweets at once.
-- `GET /api/health` says which models are loaded; `/docs` lists every endpoint.
+- `GET /api/health` says which models are loaded and their Jaccard on held-out training tweets;
+  `/docs` lists every endpoint.
 - Set the environment variable `TSE_API_KEY` to require an `X-API-Key` header.
 - `--folds 0` loads one model per seed: faster to start, uses less memory.
+
+What the scores mean:
+
+- **Real Jaccard**: the real score for one tweet. Only possible when you give the correct phrase.
+- **Estimated Jaccard**: `train2` keeps, for each sentiment, the average Jaccard of held-out tweets at
+  10 confidence levels. A new tweet gets the average of its level. It needs level two. For a run made
+  before this was added, `serve.py` and `demo.py` build the table once when they start, from the saved
+  models without training. They need `train.csv`: in a `data` folder next to `work`, or give `--data-dir`.
+  `python main.py score2 --data-dir DATA --work-dir work` does the same by hand.
+- **Confidence**: P(start) × P(end) of the chosen phrase. It shows how sure the model is; it is not a score.
+- **Held-out score**: the level-two CV Jaccard from `scores.json`, overall and per sentiment.
 
 On Colab, `colab/serve_on_colab.ipynb` starts the server, gives you a private link, and
 optionally a public link through a Cloudflare quick tunnel. Colab is not meant for running
