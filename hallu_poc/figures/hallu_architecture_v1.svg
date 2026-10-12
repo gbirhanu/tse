@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg
+  PUBLIC '-//W3C//DTD SVG 1.0//EN'
+  'http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd'>
+<svg width="1800" height="1100" preserveAspectRatio="xMinYMin meet" viewBox="0 0 1800 1100" xmlns="http://www.w3.org/2000/svg" version="1.0" fill-rule="evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<title>...</title>
+	<desc>...</desc>
+	<clipPath id="clip">
+		<rect x="0" y="0" width="1800" height="1100"/>
+	</clipPath>
+	<g id="group" transform="scale(1,-1) translate(0,-1100)" style="clip-path: url(#clip)">
+		<g transform="">
+			<rect x="0" y="0" width="1800" height="1100" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="55" y="1041" style="font-family: Arial-Bold; font-size: 34px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,2082) scale(1,-1)">Lightweight hallucination span detection</text>
+			<text x="55" y="1009" style="font-family: Arial; font-size: 19px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,2018) scale(1,-1)">Source-conditioned token classification with exact character-span output</text>
+			<polyline points="55 989, 1745 989" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+			<text x="55" y="952" style="font-family: Arial-Bold; font-size: 24px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1904) scale(1,-1)">a</text>
+			<text x="85" y="952" style="font-family: Arial-Bold; font-size: 23px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1904) scale(1,-1)">Inference architecture</text>
+			<text x="1359.875" y="952" style="font-family: Arial-Italic; font-size: 16px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,1904) scale(1,-1)">Ensemble configurations are candidates for evaluation</text>
+			<rect x="55" y="804" width="215" height="109" rx="6" ry="6" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 1.2; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="72" y="885" style="font-family: Arial-Bold; font-size: 13px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,1770) scale(1,-1)">SOURCE PROMPT</text>
+			<text x="72" y="854" style="font-family: Arial; font-size: 19px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1708) scale(1,-1)">The trial enrolled</text>
+			<text x="72" y="829" style="font-family: Arial; font-size: 19px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1658) scale(1,-1)">120 adults.</text>
+			<rect x="55" y="669" width="215" height="109" rx="6" ry="6" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 1.2; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="72" y="750" style="font-family: Arial-Bold; font-size: 13px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,1500) scale(1,-1)">LLM ANSWER</text>
+			<text x="72" y="719" style="font-family: Arial; font-size: 19px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1438) scale(1,-1)">The trial enrolled</text>
+			<text x="72" y="694" style="font-family: Arial; font-size: 19px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1388) scale(1,-1)">150 adults.</text>
+			<text x="55" y="642" style="font-family: Arial-Italic; font-size: 14px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,1284) scale(1,-1)">Illustrative input</text>
+			<polyline points="270 858, 293 858, 293 790" style="stroke: rgb(31%,39%,44%); stroke-linecap: butt; stroke-width: 1.6; fill: None; fill-rule: evenodd;"/>
+			<polyline points="270 723, 293 723, 293 790, 320 790" style="stroke: rgb(31%,39%,44%); stroke-linecap: butt; stroke-width: 1.6; fill: None; fill-rule: evenodd;"/>
+			<polygon points="320 790, 311 794, 311 786" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(31%,39%,44%); fill-rule: evenodd;"/>
+			<rect x="320" y="711" width="175" height="158" rx="6" ry="6" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 1.2; fill: rgb(96%,96%,97%); fill-rule: evenodd;"/>
+			<text x="345.197998046875" y="837" style="font-family: Arial-Bold; font-size: 19px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1674) scale(1,-1)">Pair tokenizer</text>
+			<text x="346.80859375" y="806" style="font-family: Arial; font-size: 16px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1612) scale(1,-1)">Prompt + answer</text>
+			<text x="337.23046875" y="783" style="font-family: Arial; font-size: 16px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1566) scale(1,-1)">4,096-token context</text>
+			<polyline points="338 769, 477 769" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+			<text x="355.03515625" y="749" style="font-family: Arial; font-size: 16px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1498) scale(1,-1)">Answer offsets</text>
+			<text x="369.26171875" y="726" style="font-family: Arial; font-size: 16px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1452) scale(1,-1)">[start, end)</text>
+			<text x="341.35888671875" y="683" style="font-family: Arial; font-size: 14px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,1366) scale(1,-1)">Truncate prompt only</text>
+			<text x="545" y="915" style="font-family: Arial-Bold; font-size: 13px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,1830) scale(1,-1)">INDEPENDENT MODEL WEIGHTS</text>
+			<rect x="552" y="802" width="303" height="103" rx="6" ry="6" style="stroke: rgb(9%,42%,47%); stroke-linecap: butt; stroke-width: 0.8; fill: rgb(93%,96%,97%); fill-rule: evenodd;"/>
+			<rect x="548" y="798" width="303" height="103" rx="6" ry="6" style="stroke: rgb(9%,42%,47%); stroke-linecap: butt; stroke-width: 0.8; fill: rgb(93%,96%,97%); fill-rule: evenodd;"/>
+			<rect x="545" y="795" width="303" height="103" rx="6" ry="6" style="stroke: rgb(9%,42%,47%); stroke-linecap: butt; stroke-width: 1.4; fill: rgb(93%,96%,97%); fill-rule: evenodd;"/>
+			<text x="561" y="871" style="font-family: Arial-Bold; font-size: 20px;fill: rgb(9%,42%,47%); stroke:none;" transform="translate(0,1742) scale(1,-1)">Hard-target models</text>
+			<text x="561" y="846" style="font-family: Arial; font-size: 16px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1692) scale(1,-1)">ModernBERT-base · 0.15B each</text>
+			<text x="561" y="823" style="font-family: Arial; font-size: 15px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,1646) scale(1,-1)">Seeds 42 / 43 / 44</text>
+			<rect x="653" y="806" width="15" height="8" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(90%,94%,94%); fill-rule: evenodd;"/>
+			<rect x="672" y="806" width="15" height="8" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(92%,95%,95%); fill-rule: evenodd;"/>
+			<rect x="691" y="806" width="15" height="8" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(83%,89%,90%); fill-rule: evenodd;"/>
+			<rect x="710" y="806" width="15" height="8" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(22%,51%,55%); fill-rule: evenodd;"/>
+			<rect x="729" y="806" width="15" height="8" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(14%,45%,50%); fill-rule: evenodd;"/>
+			<rect x="748" y="806" width="15" height="8" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(31%,56%,60%); fill-rule: evenodd;"/>
+			<rect x="767" y="806" width="15" height="8" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(92%,95%,95%); fill-rule: evenodd;"/>
+			<rect x="786" y="806" width="15" height="8" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(95%,97%,97%); fill-rule: evenodd;"/>
+			<rect x="552" y="678" width="303" height="103" rx="6" ry="6" style="stroke: rgb(67%,38%,20%); stroke-linecap: butt; stroke-width: 0.8; fill: rgb(98%,95%,93%); fill-rule: evenodd;"/>
+			<rect x="548" y="674" width="303" height="103" rx="6" ry="6" style="stroke: rgb(67%,38%,20%); stroke-linecap: butt; stroke-width: 0.8; fill: rgb(98%,95%,93%); fill-rule: evenodd;"/>
+			<rect x="545" y="671" width="303" height="103" rx="6" ry="6" style="stroke: rgb(67%,38%,20%); stroke-linecap: butt; stroke-width: 1.4; fill: rgb(98%,95%,93%); fill-rule: evenodd;"/>
+			<text x="561" y="747" style="font-family: Arial-Bold; font-size: 20px;fill: rgb(67%,38%,20%); stroke:none;" transform="translate(0,1494) scale(1,-1)">Soft-target models</text>
+			<text x="561" y="722" style="font-family: Arial; font-size: 16px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1444) scale(1,-1)">ModernBERT-base · 0.15B each</text>
+			<text x="561" y="699" style="font-family: Arial; font-size: 15px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,1398) scale(1,-1)">Seeds 42 / 43 / 44</text>
+			<rect x="653" y="682" width="15" height="8" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(97%,95%,93%); fill-rule: evenodd;"/>
+			<rect x="672" y="682" width="15" height="8" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(96%,92%,90%); fill-rule: evenodd;"/>
+			<rect x="691" y="682" width="15" height="8" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(90%,81%,76%); fill-rule: evenodd;"/>
+			<rect x="710" y="682" width="15" height="8" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(75%,53%,39%); fill-rule: evenodd;"/>
+			<rect x="729" y="682" width="15" height="8" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(70%,44%,28%); fill-rule: evenodd;"/>
+			<rect x="748" y="682" width="15" height="8" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(77%,57%,45%); fill-rule: evenodd;"/>
+			<rect x="767" y="682" width="15" height="8" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(94%,89%,86%); fill-rule: evenodd;"/>
+			<rect x="786" y="682" width="15" height="8" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(97%,95%,93%); fill-rule: evenodd;"/>
+			<rect x="545" y="579" width="303" height="67" rx="6" ry="6" style="stroke: rgb(31%,39%,44%); stroke-linecap: butt; stroke-width: 1.2; fill: rgb(96%,96%,97%); fill-rule: evenodd; stroke-dasharray: 5, 4;"/>
+			<text x="561" y="620" style="font-family: Arial-Bold; font-size: 17px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1240) scale(1,-1)">Published LettuceDetect-large</text>
+			<text x="561" y="596" style="font-family: Arial; font-size: 16px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,1192) scale(1,-1)">Optional member · 0.4B</text>
+			<polyline points="495 790, 518 790" style="stroke: rgb(31%,39%,44%); stroke-linecap: butt; stroke-width: 1.6; fill: None; fill-rule: evenodd;"/>
+			<polyline points="518 847, 518 722" style="stroke: rgb(31%,39%,44%); stroke-linecap: butt; stroke-width: 1.6; fill: None; fill-rule: evenodd;"/>
+			<polyline points="518 847, 545 847" style="stroke: rgb(9%,42%,47%); stroke-linecap: butt; stroke-width: 1.6; fill: None; fill-rule: evenodd;"/>
+			<polygon points="545 847, 536 851, 536 843" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(9%,42%,47%); fill-rule: evenodd;"/>
+			<polyline points="518 722, 545 722" style="stroke: rgb(67%,38%,20%); stroke-linecap: butt; stroke-width: 1.6; fill: None; fill-rule: evenodd;"/>
+			<polygon points="545 722, 536 726, 536 718" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(67%,38%,20%); fill-rule: evenodd;"/>
+			<polyline points="518 722, 518 612, 545 612" style="stroke: rgb(31%,39%,44%); stroke-linecap: butt; stroke-width: 1.6; fill: None; fill-rule: evenodd; stroke-dasharray: 5, 4;"/>
+			<polygon points="545 612, 536 616, 536 608" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(31%,39%,44%); fill-rule: evenodd;"/>
+			<polyline points="848 847, 890 847, 890 781" style="stroke: rgb(9%,42%,47%); stroke-linecap: butt; stroke-width: 1.6; fill: None; fill-rule: evenodd;"/>
+			<polyline points="848 722, 890 722, 890 781, 928 781" style="stroke: rgb(67%,38%,20%); stroke-linecap: butt; stroke-width: 1.6; fill: None; fill-rule: evenodd;"/>
+			<polygon points="928 781, 919 785, 919 777" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(67%,38%,20%); fill-rule: evenodd;"/>
+			<polyline points="848 612, 890 612, 890 722" style="stroke: rgb(31%,39%,44%); stroke-linecap: butt; stroke-width: 1.6; fill: None; fill-rule: evenodd; stroke-dasharray: 5, 4;"/>
+			<rect x="928" y="684" width="215" height="174" rx="6" ry="6" style="stroke: rgb(9%,42%,47%); stroke-linecap: butt; stroke-width: 1.4; fill: rgb(93%,96%,97%); fill-rule: evenodd;"/>
+			<text x="948.404296875" y="829" style="font-family: Arial-Bold; font-size: 19px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1658) scale(1,-1)">Token probabilities</text>
+			<text x="969.265625" y="801" style="font-family: Arial; font-size: 16px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,1602) scale(1,-1)">Two-class softmax</text>
+			<polyline points="944 783, 1127 783" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+			<text x="948.93310546875" y="757" style="font-family: Arial-Bold; font-size: 19px;fill: rgb(9%,42%,47%); stroke:none;" transform="translate(0,1514) scale(1,-1)">Equal-weight mean</text>
+			<text x="945" y="729" style="font-family: Arial; font-size: 20px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1458) scale(1,-1)">p</text>
+			<text x="956.123046875" y="725" style="font-family: Arial; font-size: 11.6px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1450) scale(1,-1)">i</text>
+			<text x="958.7001953125" y="729" style="font-family: Arial; font-size: 20px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1458) scale(1,-1)"> = (1/M) </text>
+			<text x="1033.7099609375" y="729" style="font-family: Arial; font-size: 22.0px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1458) scale(1,-1)">Σ</text>
+			<text x="1047.3095703125" y="725" style="font-family: Arial; font-size: 11.6px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1450) scale(1,-1)">m</text>
+			<text x="1056.9724609375" y="729" style="font-family: Arial; font-size: 20px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1458) scale(1,-1)"> p</text>
+			<text x="1073.6521484375" y="725" style="font-family: Arial; font-size: 11.6px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1450) scale(1,-1)">i</text>
+			<text x="1076.229296875" y="737" style="font-family: Arial; font-size: 11.6px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1474) scale(1,-1)">(m)</text>
+			<polyline points="945 746, 956 746" style="stroke: rgb(9%,17%,23%); stroke-linecap: butt; stroke-width: 0.9; fill: None; fill-rule: evenodd;"/>
+			<rect x="955" y="703" width="16" height="10" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(92%,95%,95%); fill-rule: evenodd;"/>
+			<rect x="975" y="703" width="16" height="10" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(90%,94%,94%); fill-rule: evenodd;"/>
+			<rect x="995" y="703" width="16" height="10" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(78%,86%,87%); fill-rule: evenodd;"/>
+			<rect x="1015" y="703" width="16" height="10" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(26%,53%,57%); fill-rule: evenodd;"/>
+			<rect x="1035" y="703" width="16" height="10" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(16%,46%,51%); fill-rule: evenodd;"/>
+			<rect x="1055" y="703" width="16" height="10" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(34%,58%,61%); fill-rule: evenodd;"/>
+			<rect x="1075" y="703" width="16" height="10" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(88%,92%,93%); fill-rule: evenodd;"/>
+			<rect x="1095" y="703" width="16" height="10" rx="1" ry="1" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(93%,95%,96%); fill-rule: evenodd;"/>
+			<text x="968.794677734375" y="653" style="font-family: Arial; font-size: 15px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,1306) scale(1,-1)">Same tokenizer and</text>
+			<text x="955.87109375" y="631" style="font-family: Arial; font-size: 15px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,1262) scale(1,-1)">identical ordered offsets</text>
+			<polyline points="1143 781, 1195 781" style="stroke: rgb(31%,39%,44%); stroke-linecap: butt; stroke-width: 1.6; fill: None; fill-rule: evenodd;"/>
+			<polygon points="1195 781, 1186 785, 1186 777" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(31%,39%,44%); fill-rule: evenodd;"/>
+			<rect x="1195" y="684" width="225" height="174" rx="6" ry="6" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 1.2; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="1238.065673828125" y="828" style="font-family: Arial-Bold; font-size: 21px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1656) scale(1,-1)">Span decoder</text>
+			<text x="1213" y="792" style="font-family: Arial; font-size: 16.5px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1584) scale(1,-1)">1   Probability threshold</text>
+			<text x="1213" y="760" style="font-family: Arial; font-size: 16.5px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1520) scale(1,-1)">2   Merge token gaps</text>
+			<text x="1213" y="728" style="font-family: Arial; font-size: 16.5px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1456) scale(1,-1)">3   Optional word snap</text>
+			<text x="1243.306884765625" y="653" style="font-family: Arial; font-size: 15px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,1306) scale(1,-1)">Per-task calibration</text>
+			<text x="1231.199951171875" y="630" style="font-family: Arial; font-size: 15px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,1260) scale(1,-1)">See protocol in panel c</text>
+			<polyline points="1420 781, 1475 781" style="stroke: rgb(31%,39%,44%); stroke-linecap: butt; stroke-width: 1.6; fill: None; fill-rule: evenodd;"/>
+			<polygon points="1475 781, 1466 785, 1466 777" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(31%,39%,44%); fill-rule: evenodd;"/>
+			<rect x="1475" y="660" width="270" height="222" rx="6" ry="6" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 1.2; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="1494" y="850" style="font-family: Arial-Bold; font-size: 13px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,1700) scale(1,-1)">CHARACTER-SPAN OUTPUT</text>
+			<text x="1494" y="811" style="font-family: Arial; font-size: 21px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1622) scale(1,-1)">The trial enrolled</text>
+			<rect x="1490" y="768" width="47" height="29" rx="2" ry="2" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(97%,87%,80%); fill-rule: evenodd;"/>
+			<text x="1494" y="775" style="font-family: Arial-Bold; font-size: 21px;fill: rgb(55%,27%,16%); stroke:none;" transform="translate(0,1550) scale(1,-1)">150</text>
+			<text x="1542" y="775" style="font-family: Arial; font-size: 21px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1550) scale(1,-1)">adults.</text>
+			<polyline points="1494 751, 1726 751" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+			<text x="1494" y="721" style="font-family: Arial-Bold; font-size: 21px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,1442) scale(1,-1)">[19, 22)  →  “150”</text>
+			<text x="1494" y="690" style="font-family: Arial; font-size: 15px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,1380) scale(1,-1)">Unsupported answer characters</text>
+			<text x="1475" y="630" style="font-family: Arial; font-size: 14px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,1260) scale(1,-1)">Zero-based, end-exclusive offsets</text>
+			<polyline points="55 541, 1745 541" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+			<text x="55" y="496" style="font-family: Arial-Bold; font-size: 24px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,992) scale(1,-1)">b</text>
+			<text x="85" y="496" style="font-family: Arial-Bold; font-size: 23px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,992) scale(1,-1)">Training supervision</text>
+			<text x="55" y="465" style="font-family: Arial; font-size: 17px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,930) scale(1,-1)">Annotated character spans supervise answer tokens only.</text>
+			<text x="82" y="425" style="font-family: Arial-Bold; font-size: 18px;fill: rgb(9%,42%,47%); stroke:none;" transform="translate(0,850) scale(1,-1)">Hard target  yᵢ = hᵢ</text>
+			<polyline points="82 404, 82 310, 397 310" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+			<text x="65.77001953125" y="399" style="font-family: Arial; font-size: 13px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,798) scale(1,-1)">1</text>
+			<text x="65.77001953125" y="306" style="font-family: Arial; font-size: 13px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,612) scale(1,-1)">0</text>
+			<rect x="96" y="309.99999999999994" width="22" height="1.8000000000000114" rx="1" ry="1" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(9%,42%,47%); fill-rule: evenodd;"/>
+			<rect x="128" y="309.99999999999994" width="22" height="1.8000000000000114" rx="1" ry="1" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(9%,42%,47%); fill-rule: evenodd;"/>
+			<rect x="160" y="309.99999999999994" width="22" height="1.8000000000000114" rx="1" ry="1" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(9%,42%,47%); fill-rule: evenodd;"/>
+			<rect x="192" y="310" width="22" height="85" rx="1" ry="1" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(9%,42%,47%); fill-rule: evenodd;"/>
+			<rect x="224" y="310" width="22" height="85" rx="1" ry="1" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(9%,42%,47%); fill-rule: evenodd;"/>
+			<rect x="256" y="310" width="22" height="85" rx="1" ry="1" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(9%,42%,47%); fill-rule: evenodd;"/>
+			<rect x="288" y="309.99999999999994" width="22" height="1.8000000000000114" rx="1" ry="1" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(9%,42%,47%); fill-rule: evenodd;"/>
+			<rect x="320" y="309.99999999999994" width="22" height="1.8000000000000114" rx="1" ry="1" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(9%,42%,47%); fill-rule: evenodd;"/>
+			<rect x="352" y="309.99999999999994" width="22" height="1.8000000000000114" rx="1" ry="1" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(9%,42%,47%); fill-rule: evenodd;"/>
+			<text x="167.13134765625" y="286" style="font-family: Arial; font-size: 14px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,572) scale(1,-1)">Answer-token position i</text>
+			<text x="491" y="425" style="font-family: Arial-Bold; font-size: 18px;fill: rgb(67%,38%,20%); stroke:none;" transform="translate(0,850) scale(1,-1)">Soft target  yᵢ = 0.6hᵢ + 0.4qᵢ</text>
+			<polyline points="491 404, 491 310, 806 310" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+			<text x="474.77001953125" y="399" style="font-family: Arial; font-size: 13px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,798) scale(1,-1)">1</text>
+			<text x="474.77001953125" y="306" style="font-family: Arial; font-size: 13px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,612) scale(1,-1)">0</text>
+			<rect x="505" y="309.99999999999994" width="22" height="2.5500000000000114" rx="1" ry="1" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(67%,38%,20%); fill-rule: evenodd;"/>
+			<rect x="537" y="310.0" width="22" height="5.100000000000023" rx="1" ry="1" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(67%,38%,20%); fill-rule: evenodd;"/>
+			<rect x="569" y="310.00000000000006" width="22" height="10.199999999999989" rx="1" ry="1" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(67%,38%,20%); fill-rule: evenodd;"/>
+			<rect x="601" y="310.00000000000006" width="22" height="73.94999999999999" rx="1" ry="1" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(67%,38%,20%); fill-rule: evenodd;"/>
+			<rect x="633" y="310.0" width="22" height="80.75" rx="1" ry="1" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(67%,38%,20%); fill-rule: evenodd;"/>
+			<rect x="665" y="310.00000000000006" width="22" height="73.94999999999999" rx="1" ry="1" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(67%,38%,20%); fill-rule: evenodd;"/>
+			<rect x="697" y="310.00000000000006" width="22" height="10.199999999999989" rx="1" ry="1" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(67%,38%,20%); fill-rule: evenodd;"/>
+			<rect x="729" y="310.0" width="22" height="5.100000000000023" rx="1" ry="1" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(67%,38%,20%); fill-rule: evenodd;"/>
+			<rect x="761" y="309.99999999999994" width="22" height="2.5500000000000114" rx="1" ry="1" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(67%,38%,20%); fill-rule: evenodd;"/>
+			<text x="576.13134765625" y="286" style="font-family: Arial; font-size: 14px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,572) scale(1,-1)">Answer-token position i</text>
+			<text x="55" y="253" style="font-family: Arial; font-size: 17px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,506) scale(1,-1)">hᵢ : overlap with a gold span</text>
+			<text x="55" y="225" style="font-family: Arial; font-size: 17px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,450) scale(1,-1)">qᵢ : boundary-shift coverage weighted by J + J²</text>
+			<text x="55" y="200" style="font-family: Arial; font-size: 15px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,400) scale(1,-1)">J is word-level Jaccard. Target profiles above are schematic.</text>
+			<rect x="55" y="108" width="810" height="66" rx="6" ry="6" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 1.2; fill: rgb(96%,96%,97%); fill-rule: evenodd;"/>
+			<text x="73" y="148" style="font-family: Arial-Bold; font-size: 12px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,296) scale(1,-1)">ANSWER-ONLY CROSS-ENTROPY   (A: answer tokens)</text>
+			<text x="73" y="122" style="font-family: Arial; font-size: 21px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,244) scale(1,-1)">L = − mean</text>
+			<text x="179.24072265625" y="117" style="font-family: Arial; font-size: 11.55px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,234) scale(1,-1)">i in A</text>
+			<text x="204.9180419921875" y="122" style="font-family: Arial; font-size: 21px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,244) scale(1,-1)"> [ yᵢ log pᵢ + (1 − yᵢ) log(1 − pᵢ) ]</text>
+			<polyline points="895 511, 895 108" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+			<text x="928" y="496" style="font-family: Arial-Bold; font-size: 24px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,992) scale(1,-1)">c</text>
+			<text x="958" y="496" style="font-family: Arial-Bold; font-size: 23px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,992) scale(1,-1)">Calibration and evaluation</text>
+			<text x="928" y="465" style="font-family: Arial; font-size: 17px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,930) scale(1,-1)">Our models: split RAGTruth training data by source.</text>
+			<rect x="928" y="333" width="257" height="105" rx="6" ry="6" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 1.2; fill: rgb(96%,96%,97%); fill-rule: evenodd;"/>
+			<text x="944" y="408" style="font-family: Arial-Bold; font-size: 19px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,816) scale(1,-1)">90% train sources</text>
+			<text x="944" y="379" style="font-family: Arial; font-size: 16px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,758) scale(1,-1)">Fit independent</text>
+			<text x="944" y="356" style="font-family: Arial; font-size: 16px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,712) scale(1,-1)">classifier weights</text>
+			<rect x="1208" y="333" width="257" height="105" rx="6" ry="6" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 1.2; fill: rgb(96%,96%,97%); fill-rule: evenodd;"/>
+			<text x="1224" y="408" style="font-family: Arial-Bold; font-size: 19px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,816) scale(1,-1)">10% dev sources</text>
+			<text x="1224" y="379" style="font-family: Arial; font-size: 16px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,758) scale(1,-1)">Select task-specific</text>
+			<text x="1224" y="356" style="font-family: Arial; font-size: 16px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,712) scale(1,-1)">decoder settings</text>
+			<rect x="1488" y="333" width="257" height="105" rx="6" ry="6" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 1.2; fill: rgb(96%,96%,97%); fill-rule: evenodd;"/>
+			<text x="1504" y="408" style="font-family: Arial-Bold; font-size: 19px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,816) scale(1,-1)">RAGTruth test</text>
+			<text x="1504" y="379" style="font-family: Arial; font-size: 16px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,758) scale(1,-1)">Evaluate frozen pipeline</text>
+			<text x="1504" y="356" style="font-family: Arial; font-size: 16px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,712) scale(1,-1)">2,700 answers</text>
+			<polyline points="1185 386, 1208 386" style="stroke: rgb(31%,39%,44%); stroke-linecap: butt; stroke-width: 1.6; fill: None; fill-rule: evenodd;"/>
+			<polygon points="1208 386, 1199 390, 1199 382" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(31%,39%,44%); fill-rule: evenodd;"/>
+			<polyline points="1465 386, 1488 386" style="stroke: rgb(31%,39%,44%); stroke-linecap: butt; stroke-width: 1.6; fill: None; fill-rule: evenodd;"/>
+			<polygon points="1488 386, 1479 390, 1479 382" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(31%,39%,44%); fill-rule: evenodd;"/>
+			<text x="928" y="300" style="font-family: Arial-Bold; font-size: 17px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,600) scale(1,-1)">LettuceDetect exception</text>
+			<text x="928" y="274" style="font-family: Arial; font-size: 16px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,548) scale(1,-1)">Any ensemble including published LD uses fixed decoding:</text>
+			<text x="928" y="251" style="font-family: Arial; font-size: 16px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,502) scale(1,-1)">threshold 0.5, gap 0, no word snapping.</text>
+			<text x="928" y="220" style="font-family: Arial; font-size: 15px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,440) scale(1,-1)">Two-fold cross-fitting is restricted to published LD alone.</text>
+			<rect x="928" y="108" width="817" height="87" rx="6" ry="6" style="stroke: none; stroke-linecap: butt; stroke-width: 1.2; fill: rgb(93%,96%,97%); fill-rule: evenodd;"/>
+			<text x="946" y="168" style="font-family: Arial-Bold; font-size: 17px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,336) scale(1,-1)">Primary metric: LettuceDetect-compatible character span F1</text>
+			<text x="946" y="142" style="font-family: Arial; font-size: 16px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,284) scale(1,-1)">Paired bootstrap over test sources · 95% confidence interval</text>
+			<text x="946" y="118" style="font-family: Arial; font-size: 16px;fill: rgb(9%,17%,23%); stroke:none;" transform="translate(0,236) scale(1,-1)">Retain a change only when its gain interval is entirely above zero.</text>
+			<polyline points="55 78, 1745 78" style="stroke: rgb(80%,83%,86%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+			<text x="55" y="48" style="font-family: Arial; font-size: 15px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,96) scale(1,-1)">Architecture of the current pipeline and Part C ensemble experiment. Parameter counts are per model.</text>
+			<text x="55" y="22" style="font-family: Arial; font-size: 15px;fill: rgb(31%,39%,44%); stroke:none;" transform="translate(0,44) scale(1,-1)">Soft targets retain the legacy boundary-shift implementation. Ensemble gains await full evaluation.</text>
+		</g>
+	</g>
+</svg>
