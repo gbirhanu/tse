@@ -25,6 +25,7 @@ from hallu.ensemble import ensemble_tokens, fingerprint_tokenizer
 from hallu.experiments import (PUBLISHED_LD, legacy_metadata, reference_spans,
                               require_fit, write_results)
 from hallu.scoring import bootstrap, score
+from hallu.progress import progress
 
 
 def get_device(name):
@@ -143,16 +144,18 @@ def _predict_resumable(args, p, split, samples, tok, model, metadata):
         tokens = aligned(partial, samples[:count])
         ensemble_tokens([tokens], samples[:count])
         print(f'{args.name} {split}: resuming after {count}/{len(samples)} answers.')
-    for start in range(len(tokens), len(samples), 64):
-        batch = samples[start:start + 64]
-        predicted = encoder.predict(model, tok, batch, args.max_length,
-                                    batch_tokens=args.batch_tokens, fp16=not args.no_fp16)
-        ensemble_tokens([predicted], batch)
-        tokens.extend(predicted)
-        record = prediction_record(samples[:len(tokens)], tokens, metadata)
-        record['config'] = identity
-        atomic_write(partial_path, record, binary=True)
-        print(f'{args.name} {split}: saved {len(tokens)}/{len(samples)} answers.')
+    with progress(total=len(samples), initial=len(tokens),
+                  desc=f'{args.name} {split} prediction', unit='answers') as bar:
+        for start in range(len(tokens), len(samples), 64):
+            batch = samples[start:start + 64]
+            predicted = encoder.predict(model, tok, batch, args.max_length,
+                                        batch_tokens=args.batch_tokens, fp16=not args.no_fp16,
+                                        progress_desc=None, on_batch=bar.update)
+            ensemble_tokens([predicted], batch)
+            tokens.extend(predicted)
+            record = prediction_record(samples[:len(tokens)], tokens, metadata)
+            record['config'] = identity
+            atomic_write(partial_path, record, binary=True)
     save_preds(p, args.name, split, samples, tokens, metadata)
     if os.path.exists(partial_path):
         os.remove(partial_path)
@@ -239,7 +242,7 @@ def _load_member(args, p, name, split, samples, legacy_tok=None):
         if legacy_tok is None:
             raise ValueError(f'{name} is a legacy cache. Supply --legacy-tokenizer to validate '
                              'its exact answer offsets; originals will remain unchanged.')
-        for i, sample in enumerate(samples):
+        for i, sample in enumerate(progress(samples, desc=f'Checking {name} {split} tokens', unit='answers')):
             encoded = legacy_tok(sample['prompt'], sample['answer'], truncation='only_first',
                                  max_length=args.max_length, return_offsets_mapping=True)
             offsets = [tuple(offset) for offset, sid in

@@ -10,6 +10,7 @@ import itertools
 import numpy as np
 
 from hallu.scoring import ld_counts, prf
+from hallu.progress import progress
 
 GRID_T = [0.03, 0.05, 0.08] + [round(float(x), 2) for x in np.arange(0.1, 0.71, 0.05)]
 GRID_GAP = [0, 1, 2, 3]
@@ -77,7 +78,9 @@ def tune(token_lists, samples):
     for task in sorted({s['task'] for s in samples}):
         idx = [i for i, s in enumerate(samples) if s['task'] == task]
         top = (-1.0, BASELINE)
-        for t, gap, snap in itertools.product(GRID_T, GRID_GAP, GRID_SNAP):
+        grid = itertools.product(GRID_T, GRID_GAP, GRID_SNAP)
+        for t, gap, snap in progress(grid, total=len(GRID_T) * len(GRID_GAP) * len(GRID_SNAP),
+                                     desc=f'Tuning decoder ({task})', unit='settings'):
             c = np.zeros(3)
             for i in idx:
                 c += ld_counts(decode(token_lists[i], samples[i]['answer'], t, gap, snap),

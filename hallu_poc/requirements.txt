@@ -2,5 +2,6 @@
 torch>=2.5,<3
 transformers==4.57.6
 numpy>=1.26,<3
+tqdm>=4.27,<5
 # CPU validation suite
 pytest>=8,<10

@@ -9,6 +9,13 @@ It clones that branch into `/content/tse` and calls `hallu_poc/poc.py` from ther
 Predictions, checkpoints and results remain in `/content/drive/MyDrive/hallu_poc/work`.
 Parts A and B remain historical notebooks using the existing Drive copy.
 
+Each long phase shows a small progress bar with percentage, completed/total work,
+elapsed time and estimated time remaining. ETA is for the displayed phase or epoch,
+not the whole notebook; it becomes more useful after a few batches. Resumed runs
+start their bars at the saved position. To update an already-open Colab session,
+push the new commit, let the active experiment finish, then run Part C's optional
+code-update cell before starting the next experiment.
+
 Run Part C's experiment cells individually:
 
 1. Average the existing `mb_hard` and `mb_soft` token probabilities, with decoding fitted on dev.

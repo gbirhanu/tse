@@ -21,6 +21,7 @@ from transformers import (AutoModelForTokenClassification, AutoTokenizer,
 
 from hallu import soft
 from hallu.decoding import BASELINE, decode_all
+from hallu.progress import progress
 from hallu.scoring import score
 
 
@@ -71,7 +72,8 @@ def _pad(tok, seqs, device):
 
 
 @torch.no_grad()
-def predict(model, tok, samples, max_length=4096, batch_tokens=16384, fp16=True, encs=None):
+def predict(model, tok, samples, max_length=4096, batch_tokens=16384, fp16=True, encs=None,
+            progress_desc='Predicting', on_batch=None):
     """Per sample: list of (start, end, p_hallucinated) for each answer token."""
     model.eval()
     device = next(model.parameters()).device
@@ -80,14 +82,19 @@ def predict(model, tok, samples, max_length=4096, batch_tokens=16384, fp16=True,
     order = sorted(range(len(samples)), key=lambda i: lengths[i])
     out = [None] * len(samples)
     use_amp = fp16 and device.type == 'cuda'
-    for b in _batches(lengths, order, batch_tokens):
-        ids, mask = _pad(tok, [encs[i][0] for i in b], device)
-        with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_amp):
-            logits = model(input_ids=ids, attention_mask=mask).logits
-        probs = torch.softmax(logits.float(), -1)[..., 1].cpu().numpy()
-        for r, i in enumerate(b):
-            _, ans, offs = encs[i]
-            out[i] = [(int(s), int(e), float(probs[r, j])) for j, (s, e) in zip(ans, offs)]
+    with progress(total=len(samples), desc=progress_desc or 'Predicting', unit='answers',
+                  disable=progress_desc is None) as bar:
+        for b in _batches(lengths, order, batch_tokens):
+            ids, mask = _pad(tok, [encs[i][0] for i in b], device)
+            with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_amp):
+                logits = model(input_ids=ids, attention_mask=mask).logits
+            probs = torch.softmax(logits.float(), -1)[..., 1].cpu().numpy()
+            for r, i in enumerate(b):
+                _, ans, offs = encs[i]
+                out[i] = [(int(s), int(e), float(probs[r, j])) for j, (s, e) in zip(ans, offs)]
+            bar.update(len(b))
+            if on_batch is not None:
+                on_batch(len(b))
     return out
 
 
@@ -254,11 +261,12 @@ def train(name, train_samples, dev_samples, targets='hard', epochs=3, lr=2e-5,
             model.config.use_cache = False
     t0 = time.time()
     data = []
-    for s in train_samples:
+    for s in progress(train_samples, desc='Preparing training data', unit='answers'):
         ids, ans, offs = encode(tok, s['prompt'], s['answer'], max_length)
         y = soft.token_targets(s['answer'], s['spans'], offs, kind=targets)
         data.append((ids, ans, y))
-    dev_encs = [encode(tok, s['prompt'], s['answer'], max_length) for s in dev_samples]
+    dev_encs = [encode(tok, s['prompt'], s['answer'], max_length)
+                for s in progress(dev_samples, desc='Preparing dev data', unit='answers')]
     lengths = [len(d[0]) for d in data]
     log(f'Encoded {len(data)} training answers in {time.time() - t0:.0f}s '
         f'(median {int(np.median(lengths))} tokens, max {max(lengths)})')
@@ -345,7 +353,8 @@ def train(name, train_samples, dev_samples, targets='hard', epochs=3, lr=2e-5,
             batches = epoch_batches()
             next_batch, total, seen, elapsed = 0, 0.0, 0, 0.0
             save_checkpoint(ep, 0, batches, total, seen, elapsed)
-        for step in range(next_batch, len(batches)):
+        for step in progress(range(next_batch, len(batches)), total=len(batches),
+                             initial=next_batch, desc=f'Epoch {ep + 1}/{epochs} training', unit='batches'):
             b = batches[step]
             ids, mask = _pad(tok, [data[i][0] for i in b], device)
             rows = torch.cat([torch.full((len(data[i][1]),), r, dtype=torch.long)
@@ -373,7 +382,7 @@ def train(name, train_samples, dev_samples, targets='hard', epochs=3, lr=2e-5,
                 log(f'  epoch {ep + 1} step {step + 1}/{len(batches)} loss {total / seen:.4f} '
                     f'({time.time() - t0:.0f}s)')
         dev_tokens = predict(model, tok, dev_samples, max_length, batch_tokens=batch_tokens,
-                             fp16=fp16, encs=dev_encs)
+                             fp16=fp16, encs=dev_encs, progress_desc=f'Epoch {ep + 1}/{epochs} validation')
         f1 = score(decode_all(dev_tokens, dev_samples, BASELINE), dev_samples)['all'][2]
         history.append({'epoch': ep + 1, 'loss': round(total / max(seen, 1), 4), 'dev_span_f1': f1,
                         'seconds': round(elapsed + time.time() - t0)})
