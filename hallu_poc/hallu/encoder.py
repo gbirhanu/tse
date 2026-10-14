@@ -27,9 +27,22 @@ from hallu.progress import progress
 from hallu.scoring import score
 
 
-def load(name, device, fp16_weights=False):
+def load(name, device, fp16_weights=False, new_head=False):
+    """Loads a 2-class token classifier.
+
+    new_head=True (training only) also accepts a starting checkpoint trained for a
+    different task, such as an NLI sentence classifier with 3 labels: its encoder
+    and pooling head are kept and only the final 2-class layer starts fresh.
+    Checkpoints that already have 2 labels load exactly as before.
+    """
     tok = AutoTokenizer.from_pretrained(name)
     kwargs = {'num_labels': 2}
+    if new_head:
+        from transformers import AutoConfig
+        if AutoConfig.from_pretrained(name).num_labels != 2:
+            kwargs.update(ignore_mismatched_sizes=True,
+                          id2label={0: 'supported', 1: 'hallucinated'},
+                          label2id={'supported': 0, 'hallucinated': 1})
     try:      # ModernBERT can torch.compile parts of itself; turn that off (old GPUs, Colab)
         model = AutoModelForTokenClassification.from_pretrained(name, reference_compile=False, **kwargs)
     except (TypeError, ValueError):
@@ -263,7 +276,7 @@ def train(name, train_samples, dev_samples, targets='hard', epochs=3, lr=2e-5,
         _cleanup_staging(checkpoint_path.parent)
     seed_all(seed)
     device = torch.device(device)
-    tok, model = load(name, device)
+    tok, model = load(name, device, new_head=True)
     if gradient_checkpointing:
         model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={'use_reentrant': False})
         if hasattr(model.config, 'use_cache'):

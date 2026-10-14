@@ -5,3 +5,5 @@ numpy>=1.26,<3
 tqdm>=4.27,<5
 # CPU validation suite
 pytest>=8,<10
+# Part E step 3 only (synth): names are found with spaCy's small English model
+#   pip install "spacy>=3.7,<4" && python -m spacy download en_core_web_sm

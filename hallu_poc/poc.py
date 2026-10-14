@@ -1,4 +1,4 @@
-"""RAGTruth span detection: predict, train, ensemble, levers, report.
+"""RAGTruth span detection: predict, train, ensemble, soup, synth, levers, report.
 
 Own-model decoders are fitted on the source-held-out dev split. Only the
 published LettuceDetect model may use two-fold source cross-fitting. An
@@ -9,6 +9,7 @@ All new runs save checked, resumable outputs in --work-dir. Repeating the same
 command skips finished work; changed configurations require a new run name.
 """
 import argparse
+import json
 import math
 import os
 import re
@@ -38,7 +39,7 @@ def get_device(name):
 
 def paths(work):
     work = os.path.abspath(work)
-    p = {key: os.path.join(work, key) for key in ('preds', 'results', 'models')}
+    p = {key: os.path.join(work, key) for key in ('preds', 'results', 'models', 'synth')}
     for directory in p.values():
         os.makedirs(directory, exist_ok=True)
     return p
@@ -210,6 +211,14 @@ def cmd_train(args, p):
         loss_config = {'span_f1_weight': args.span_f1_weight,
                        'span_f1_version': SPAN_F1_VERSION}
         config.update(loss_config)
+    extra = []
+    if args.extra_train:
+        # Part E step 3: extra synthetic answers built from training sources only.
+        from hallu import synth
+        extra_path = os.path.join(p['synth'], f'{args.extra_train}.json')
+        extra = synth.check_extra(read_json(extra_path)['samples'], train, dev, test)
+        config['extra_train'] = {'name': args.extra_train, 'sha256': file_hash(extra_path),
+                                 'samples': sample_fingerprint(extra), 'count': len(extra)}
     training_path = os.path.join(p['results'], f'{args.name}_training.json')
     outputs = [_pred_path(p, args.name, split) for split in ('dev', 'test')] + [training_path]
     done, finished = _start(p, args.name, 'train', config, outputs)
@@ -223,8 +232,10 @@ def cmd_train(args, p):
     if loss_config:
         print(f'Loss: answer-token cross-entropy + {args.span_f1_weight:g} × '
               f'character soft-F1 surrogate ({SPAN_F1_VERSION}).')
+    if extra:
+        print(f'Adding {len(extra)} synthetic training answers from {args.extra_train}.')
     tok, model, history = encoder.train(
-        args.base, train, dev, targets=args.targets, epochs=args.epochs, lr=args.lr,
+        args.base, train + extra, dev, targets=args.targets, epochs=args.epochs, lr=args.lr,
         max_length=args.max_length, batch_tokens=args.batch_tokens, seed=args.seed,
         device=device, fp16=not args.no_fp16, checkpoint_dir=checkpoint_dir,
         checkpoint_every=args.checkpoint_every, gradient_checkpointing=args.gradient_checkpointing,
@@ -235,6 +246,8 @@ def cmd_train(args, p):
                 'train_fingerprint': sample_fingerprint(train), 'dev_fingerprint': sample_fingerprint(dev),
                 'soft_version': 'legacy', 'kind': 'trained'}
     metadata.update(loss_config)
+    if extra:
+        metadata.update({'extra_train': args.extra_train, 'extra_train_count': len(extra)})
     best_dir = os.path.join(checkpoint_dir, 'best')
     atomic_write(os.path.join(best_dir, 'hallu_run.json'), metadata)
     atomic_write(training_path, {'base': args.base, 'targets': args.targets,
@@ -318,6 +331,79 @@ def cmd_ensemble(args, p):
     outputs.extend([os.path.join(p['results'], f'{args.name}_levers.json'),
                     os.path.join(p['preds'], f'{args.name}_spans.pkl')])
     mark_finished(done, config, outputs)
+
+
+def cmd_soup(args, p):
+    """Part E step 1: one model whose weights are the plain average of finished runs.
+
+    Members must be our own runs trained without the dev split, from the same
+    starting checkpoint with the same tokenizer. The averaged model is then
+    predicted on dev and test like any other model, so levers can fit on dev.
+    """
+    member_dirs, metas = [], []
+    for name in args.members:
+        directory = os.path.join(p['models'], name, 'best')
+        meta_path = os.path.join(directory, 'hallu_run.json')
+        if not os.path.isfile(meta_path):
+            raise ValueError(f'{name} has no saved best model in {directory}')
+        meta = read_json(meta_path)
+        if meta.get('kind') != 'trained' or meta.get('training_scope') != 'train_without_dev':
+            raise ValueError(f'{name} is not one of our models trained without the dev split')
+        member_dirs.append(directory)
+        metas.append(meta)
+    for key in ('model', 'tokenizer_hash', 'max_length', 'dev_fingerprint'):
+        if len({json.dumps(meta.get(key)) for meta in metas}) != 1:
+            raise ValueError(f'Members differ in {key}; only runs from the same starting '
+                             'checkpoint can be averaged')
+    out_dir = os.path.join(p['models'], args.name, 'best')
+    meta_path = os.path.join(out_dir, 'hallu_run.json')
+    from hallu.soup import SOUP_VERSION
+    config = {'format': 1, 'version': SOUP_VERSION,
+              'members': {name: _model_identity(d) for name, d in zip(args.members, member_dirs)}}
+    done, finished = _start(p, args.name, 'soup', config, [meta_path])
+    if not finished:
+        from hallu import encoder
+        from hallu.soup import average_models
+        keep_tok, keep_model = average_models(member_dirs, log=lambda m: print(m, flush=True))
+        encoder._export_best(keep_tok, keep_model, out_dir)
+        atomic_write(meta_path, {
+            'model': metas[0]['model'], 'kind': 'soup', 'soup_version': SOUP_VERSION,
+            'members': args.members, 'training_scope': 'train_without_dev',
+            'member_run_configs': {name: meta.get('run_config') for name, meta in zip(args.members, metas)},
+            'tokenizer_hash': metas[0]['tokenizer_hash'], 'max_length': metas[0]['max_length']})
+        outputs = [os.path.join(out_dir, f) for f in sorted(os.listdir(out_dir))
+                   if os.path.isfile(os.path.join(out_dir, f))]
+        mark_finished(done, config, outputs)
+        print(f'Averaged {len(member_dirs)} models into {out_dir}.', flush=True)
+    args.model, args.with_dev = out_dir, True
+    cmd_predict(args, p)
+
+
+def cmd_synth(args, p):
+    """Part E step 3: extra training summaries with known errors (see hallu/synth.py)."""
+    from hallu import synth
+    train, dev, test = splits(args)
+    out = os.path.join(p['synth'], f'{args.name}.json')
+    config = {'format': 1, 'version': synth.SYNTH_VERSION, 'seed': args.seed,
+              'train': sample_fingerprint(train)}
+    done, finished = _start(p, args.name, 'synth', config, [out])
+    if finished:
+        record = read_json(out)
+    else:
+        extra, stats = synth.make(train, seed=args.seed)
+        synth.check_extra(extra, train, dev, test)
+        record = {'config': config, 'stats': stats, 'samples': extra}
+        atomic_write(out, record)
+        mark_finished(done, config, [out])
+    stats = record['stats']
+    print(f'{stats["made"]} synthetic summaries from {stats["error_free_summaries"]} error-free '
+          f'training summaries: {stats["swap"]} with a swapped word, {stats["move"]} with a moved '
+          f'sentence. Swaps by kind: {stats["swap_types"]}.')
+    for sample in record['samples'][:: max(1, len(record['samples']) // 4)][:4]:
+        a, b = sample['spans'][0]
+        text = sample['answer']
+        print(f'  [{sample["synth"]["kind"]}] ...{text[max(0, a - 80):a]}[[{text[a:b]}]]'
+              f'{text[b:b + 40]}...'.replace('\n', ' '))
 
 
 def cmd_levers(args, p):
@@ -434,6 +520,8 @@ def cmd_report(args, p):
     for filename in sorted(os.listdir(p['results'])):
         if filename.endswith('_levers.json'):
             rows.extend(read_json(os.path.join(p['results'], filename))['rows'])
+    if args.runs:
+        rows = [row for row in rows if row['run'] in args.runs]
     if not rows:
         print('No results yet. Run levers or ensemble first.')
         return
@@ -454,7 +542,7 @@ def cmd_report(args, p):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('step', choices=['predict', 'train', 'ensemble', 'levers', 'report'])
+    ap.add_argument('step', choices=['predict', 'train', 'ensemble', 'soup', 'synth', 'levers', 'report'])
     ap.add_argument('--data-dir', default='RAGTruth')
     ap.add_argument('--work-dir', default='work')
     ap.add_argument('--name', help='unique run name; changed settings require a new name')
@@ -469,7 +557,10 @@ def main():
     ap.add_argument('--max-length', type=int, default=4096)
     ap.add_argument('--batch-tokens', type=int)
     ap.add_argument('--fit', choices=['dev', 'crossfit', 'fixed'], default='dev')
-    ap.add_argument('--members', nargs='+', help='ensemble: predeclared unique run names')
+    ap.add_argument('--members', nargs='+', help='ensemble or soup: predeclared unique run names')
+    ap.add_argument('--extra-train', metavar='SYNTH_NAME',
+                    help='train only: also train on the synthetic answers made by synth --name SYNTH_NAME')
+    ap.add_argument('--runs', nargs='+', help='report only: show just these runs')
     ap.add_argument('--weights', nargs='+', type=float, help='ensemble: predeclared nonnegative weights')
     ap.add_argument('--legacy-tokenizer', help='tokenizer used to verify original prediction caches')
     ap.add_argument('--against', metavar='RUN:SETTING', help='declared previous best for paired acceptance')
@@ -490,7 +581,8 @@ def main():
         ap.error('--span-f1-weight applies only to train')
     if args.step != 'report' and not args.name:
         ap.error('--name is required')
-    names = ([args.name] if args.name else []) + (args.members or []) + (args.compare or [])
+    names = (([args.name] if args.name else []) + (args.members or []) + (args.compare or [])
+             + ([args.extra_train] if args.extra_train else []))
     if args.against:
         if ':' not in args.against:
             ap.error('--against must be RUN:SETTING')
@@ -500,24 +592,28 @@ def main():
         names.append(run)
     if any(not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]*', name) for name in names):
         ap.error('Run names must use letters, digits, periods, underscores, and hyphens.')
-    if args.step == 'ensemble':
+    if args.extra_train and args.step != 'train':
+        ap.error('--extra-train applies only to train')
+    if args.step in ('ensemble', 'soup'):
         if not args.members or len(args.members) < 2 or len(set(args.members)) != len(args.members):
-            ap.error('ensemble requires at least two unique --members')
+            ap.error(f'{args.step} requires at least two unique --members')
         if args.name in args.members:
-            ap.error('The ensemble name must differ from its member names')
+            ap.error(f'The {args.step} name must differ from its member names')
+    if args.step == 'ensemble':
         if args.fit == 'crossfit':
             ap.error('Cross-fitting is reserved for the published LD model, never an ensemble')
     if args.stacker and args.fit == 'fixed':
         ap.error('--stacker cannot be combined with fixed decoding')
     if args.batch_tokens is None:
-        args.batch_tokens = 16384 if args.step == 'predict' else 8192
+        args.batch_tokens = 16384 if args.step in ('predict', 'soup') else 8192
     if any(value is not None and value < 1 for value in
            (args.limit, args.test_limit, args.batch_tokens, args.max_length, args.epochs, args.checkpoint_every)):
         ap.error('Limits, epochs, context, batch budget and checkpoint interval must be positive')
     try:
         p = paths(args.work_dir)
         {'predict': cmd_predict, 'train': cmd_train, 'ensemble': cmd_ensemble,
-         'levers': cmd_levers, 'report': cmd_report}[args.step](args, p)
+         'soup': cmd_soup, 'synth': cmd_synth, 'levers': cmd_levers,
+         'report': cmd_report}[args.step](args, p)
     except (ValueError, FileNotFoundError, KeyError) as exc:
         ap.exit(2, f'Error: {exc}\n')
 

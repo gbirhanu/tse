@@ -2,7 +2,48 @@
 
 Span detection on RAGTruth, with LettuceDetect-compatible character span F1 as the main measure.
 
-## Next run: Part D (one loss change)
+## Next run: Part E (three lightweight steps)
+
+Parts C and D showed that output-only changes (soft targets, the span-F1 loss) give nothing once
+the cut-off is tuned on dev; only a model that knows more helped (6-model average: 57.34). Part E
+tests three ways to get that while keeping the final detector at **one ModernBERT-base (0.15B)**.
+Open `colab/part_e.ipynb` on a T4. Each step is resumable and can run on a different day.
+
+| Step | Run | What changes | Compare with |
+|---|---|---|---|
+| 1 | `soup_hs4` | One model whose weights are the average of `mb_hard_s43`, `mb_hard_s44`, `mb_soft_s43`, `mb_soft_s44` (no training) | single seeds; `ens_hs4`, the same four averaged at the output |
+| 2 | `nli_hard_s43` | Starts from `tasksource/ModernBERT-base-nli` instead of ModernBERT-base | `mb_hard_s43` (same seed and settings) |
+| 3 | `mb_hard_syn_s43` | Adds about 2,900 synthetic training summaries with known errors (`synth --name syn_sum_v1`) | `mb_hard_s43` |
+
+New commands:
+
+```
+python poc.py soup  --name soup_hs4 --members mb_hard_s43 mb_hard_s44 mb_soft_s43 mb_soft_s44
+python poc.py synth --name syn_sum_v1            # needs spaCy + en_core_web_sm
+python poc.py train --name mb_hard_syn_s43 --seed 43 --extra-train syn_sum_v1
+python poc.py report --runs soup_hs4 ens_hs4 mb_hard_s43
+```
+
+- `soup` (`hallu/soup.py`) accepts only our own runs trained without dev, from the same starting
+  checkpoint, tokenizer, context and dev split. The averaged model is predicted on dev and test,
+  so `levers --fit dev` works as for any trained run.
+- Training from a checkpoint with a different head (the NLI model has 3 sentence labels) keeps its
+  encoder and pooling layer and starts only the final 2-class layer fresh. Checkpoints that
+  already have 2 labels load exactly as before.
+- `synth` (`hallu/synth.py`) uses error-free **training** summaries only (dev and test sources are
+  refused). A *swap* changes one number, year, month, weekday or name (a name only for another
+  name of the same kind from the same article, found with spaCy). A *move* inserts a sentence that
+  annotators marked as hallucinated in another model's summary of the same article. The changed
+  text is the span. Lead-in lines such as "Here's a summary in 49 words:" are never edited.
+- CPU check: `python tools/smoke_part_e.py --data-dir RAGTruth` and `python -m pytest tests -q`.
+
+## Completed experiment: Part D (one loss change)
+
+Result ([record](experiment_records/2026-10-14_part_d_report.txt)): `mb_hard_f1w020_s42` scored
+55.12 at the 0.5 cut-off (control 52.71) but **55.46 after tuning, against 55.48 for the control**.
+The loss mainly raised the probabilities (recall 48.7 against 43.8 at 0.5), which the tuned cut-off
+already corrects, so it is not used further.
+
 
 Part C finished on Colab. The [reported table](experiment_records/2026-10-14_part_c_report.txt)
 and [structured record](experiment_records/2026-10-14_part_c_report.json) preserve the user's
@@ -13,7 +54,7 @@ averaged 55.21 versus soft seeds 54.96; the matched differences were -0.18, -0.3
 These seed averages are descriptive, not new paired intervals. The mixed ensemble's summary
 F1 was 38.27 versus LD's 44.60; its QA F1 was 65.01 versus 64.41.
 
-Open `colab/part_d.ipynb` after pushing the new local commits. It clones/updates only
+`colab/part_d.ipynb` clones/updates only
 **fix/runnable-pipeline**, reuses the same Drive work folder, visibly streams progress, and
 renders result tables in the notebook. One training/evaluation attempt is limited to 110
 minutes; rerun to resume after timeout/disconnection. Completed steps are validated and skipped.

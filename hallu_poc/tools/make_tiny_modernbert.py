@@ -3,6 +3,10 @@ A tiny random ModernBERT with a small BPE tokenizer trained on RAGTruth text.
 Only for checking that every step runs without a GPU or internet; scores mean nothing.
 
     python tools/make_tiny_modernbert.py --data-dir RAGTruth --out work_test/tiny-modernbert
+    python tools/make_tiny_modernbert.py --data-dir RAGTruth --out work_test/tiny-nli --nli
+
+--nli saves a 3-label sentence classifier instead, shaped like an NLI checkpoint
+(tasksource/ModernBERT-base-nli), to check training from such a starting point.
 """
 import argparse
 import os
@@ -11,8 +15,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from tokenizers import Tokenizer, decoders, models, pre_tokenizers, processors, trainers  # noqa: E402
-from transformers import (ModernBertConfig, ModernBertForTokenClassification,              # noqa: E402
-                          PreTrainedTokenizerFast)
+from transformers import (ModernBertConfig, ModernBertForSequenceClassification,           # noqa: E402
+                          ModernBertForTokenClassification, PreTrainedTokenizerFast)
 
 from hallu.data import load_ragtruth  # noqa: E402
 
@@ -21,6 +25,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--data-dir', required=True)
     ap.add_argument('--out', required=True)
+    ap.add_argument('--nli', action='store_true', help='save a 3-label sentence classifier')
     args = ap.parse_args()
     samples = load_ragtruth(args.data_dir)[:3000]
     texts = [s['answer'] for s in samples] + [s['prompt'] for s in samples[::6]]
@@ -44,7 +49,12 @@ def main():
                            num_hidden_layers=2, num_attention_heads=2, max_position_embeddings=4096,
                            pad_token_id=fast.pad_token_id, cls_token_id=cls, sep_token_id=sep,
                            num_labels=2)
-    ModernBertForTokenClassification(cfg).save_pretrained(args.out)
+    if args.nli:
+        cfg.id2label = {0: 'entailment', 1: 'neutral', 2: 'contradiction'}
+        cfg.label2id = {v: k for k, v in cfg.id2label.items()}
+        ModernBertForSequenceClassification(cfg).save_pretrained(args.out)
+    else:
+        ModernBertForTokenClassification(cfg).save_pretrained(args.out)
     print('saved', args.out, 'vocab', len(fast))
 
 

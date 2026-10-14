@@ -58,7 +58,7 @@ class ResumeTest(unittest.TestCase):
         self.addCleanup(self.clean_scratch)
         self.created = []
 
-        def tiny_load(name, device, fp16_weights=False):
+        def tiny_load(name, device, fp16_weights=False, new_head=False):
             model = TinyClassifier().to(device)
             self.created.append(model)
             return TinyTokenizer(), model
