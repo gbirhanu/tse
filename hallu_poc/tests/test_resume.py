@@ -90,6 +90,9 @@ class ResumeTest(unittest.TestCase):
         return torch.load(self.directory(name) / 'latest.pt', map_location='cpu', weights_only=False)
 
     def test_mid_epoch_resume_is_exact_and_completed_run_skips(self):
+        self._check_exact_resume()
+
+    def _check_exact_resume(self):
         save = encoder._atomic_checkpoint
 
         def capture_full(path, payload):
@@ -139,6 +142,45 @@ class ResumeTest(unittest.TestCase):
         self.assertTrue((self.directory('resumed') / 'best' / 'pytorch_model.bin').exists())
         encoder.train(**self.args, checkpoint_dir=self.directory('resumed'))
         self.assertEqual(self.created[-1].training_calls, 0)
+
+    def test_positive_span_f1_weight_resumes_exactly_and_rejects_changed_weight(self):
+        self.args['span_f1_weight'] = 0.2
+        self._check_exact_resume()
+        identity = self.state('resumed')['identity']
+        self.assertEqual(identity['span_f1_weight'], 0.2)
+        self.assertEqual(identity['span_f1_version'], encoder.SPAN_F1_VERSION)
+        for weight in (0.0, 0.3):
+            with self.subTest(weight=weight), self.assertRaisesRegex(ValueError, 'span_f1_weight'):
+                encoder.train(**dict(self.args, span_f1_weight=weight), checkpoint_dir=self.directory('resumed'))
+
+    def test_zero_span_f1_preserves_legacy_identity_and_numeric_path(self):
+        with patch.object(encoder, 'character_targets', side_effect=AssertionError('new targets called')), \
+                patch.object(encoder, 'soft_span_f1_loss', side_effect=AssertionError('new loss called')):
+            _, default_model, _ = encoder.train(**self.args, checkpoint_dir=self.directory('default'))
+            _, explicit_zero_model, _ = encoder.train(**self.args, span_f1_weight=0.0,
+                                                     checkpoint_dir=self.directory('explicit-zero'))
+            encoder.train(**self.args, checkpoint_dir=self.directory('explicit-zero'))
+            self.assertEqual(self.created[-1].training_calls, 0)
+        for key, expected in default_model.state_dict().items():
+            torch.testing.assert_close(explicit_zero_model.state_dict()[key], expected, rtol=0, atol=0)
+        legacy_keys = {'format', 'name', 'targets', 'epochs', 'lr', 'max_length', 'batch_tokens',
+                       'seed', 'device_type', 'fp16', 'warmup', 'gradient_checkpointing', 'n_steps',
+                       'model_config', 'train', 'dev', 'train_encodings', 'dev_encodings'}
+        identity = self.state('default')['identity']
+        self.assertEqual(set(identity), legacy_keys)
+        self.assertEqual(identity, self.state('explicit-zero')['identity'])
+        legacy_data = []
+        for sample in self.args['train_samples']:
+            ids, answer_tokens, offsets = tiny_encode(None, sample['prompt'], sample['answer'], 4096)
+            targets = encoder.soft.token_targets(sample['answer'], sample['spans'], offsets, kind='hard')
+            legacy_data.append((ids, answer_tokens, targets))
+        self.assertEqual(identity['train_encodings'], encoder._rows_fingerprint(legacy_data))
+
+    def test_span_f1_weight_must_be_finite_and_nonnegative(self):
+        for weight in (-0.1, float('nan'), float('inf'), float('-inf')):
+            with self.subTest(weight=weight), self.assertRaisesRegex(ValueError, 'finite and nonnegative'):
+                encoder.train(**self.args, span_f1_weight=weight)
+        self.assertEqual(self.created, [])
 
     def test_interrupted_dev_repeats_evaluation_without_retraining(self):
         args = dict(self.args, epochs=1)

@@ -2,7 +2,64 @@
 
 Span detection on RAGTruth, with LettuceDetect-compatible character span F1 as the main measure.
 
-## Next run: Part C
+## Next run: Part D (one loss change)
+
+Part C finished on Colab. The [reported table](experiment_records/2026-10-14_part_c_report.txt)
+and [structured record](experiment_records/2026-10-14_part_c_report.json) preserve the user's
+rounded results; per-answer predictions remain on Drive. No ensemble passed the acceptance
+gate, so the reference remains **ld_large:baseline, 58.93 LD span F1**. The best own candidate
+was the six-model ensemble at **57.34**, difference **-1.59 [-4.10, +1.20]**. Tuned hard seeds
+averaged 55.21 versus soft seeds 54.96; the matched differences were -0.18, -0.39 and -0.18.
+These seed averages are descriptive, not new paired intervals. The mixed ensemble's summary
+F1 was 38.27 versus LD's 44.60; its QA F1 was 65.01 versus 64.41.
+
+Open `colab/part_d.ipynb` after pushing the new local commits. It clones/updates only
+**fix/runnable-pipeline**, reuses the same Drive work folder, visibly streams progress, and
+renders result tables in the notebook. One training/evaluation attempt is limited to 110
+minutes; rerun to resume after timeout/disconnection. Completed steps are validated and skipped.
+The last cell redisplays and saves the table without training. Actual T4 duration is unmeasured.
+
+Part D fixes one candidate in advance: **mb_hard_f1w020_s42**. It keeps ModernBERT-base,
+hard labels, seed 42, 3 epochs, learning rate 2e-5, 4,096 context, and 8,192 batch tokens.
+The only learning change is **CE + 0.2 x character-weighted soft-F1 loss**. Decoder settings
+are still fitted on held-out dev; epoch selection still uses dev LD F1 at threshold 0.5.
+Compare the candidate both with `mb_hard:tuned` (matched loss ablation) and
+`ld_large:baseline` (global replacement gate). A positive result against the weaker matched
+control alone is not a reason to replace LD. Do not search loss weights on the test results.
+The legacy seed-42 control has no recorded dependency/model revision. This first comparison
+matches its documented settings, not a verifiably identical software environment; replicate
+any promising result with a fresh matched control before making a paper-level loss claim.
+
+### What the new loss approximates
+
+For each answer character, divide its mass equally among the tokens whose offsets cover it.
+Let w be a token's assigned character mass and g its assigned gold mass divided by w;
+overlapping gold spans form a union. With hallucination probability p, pool within a batch:
+
+```
+P = sum(w * p), G = sum(w * g), I = sum(w * p * g)
+auxiliary = 1 - (2*I + 1e-8) / (P + G + 1e-8)
+```
+
+If the entire batch has no covered gold characters, use `P / sum(w)` to retain useful
+false-positive gradients. Zero covered mass gives differentiable zero. The auxiliary is a
+surrogate, not the exact LD metric: unrepresented characters, decoder merging/snapping and
+LD's repeated counting of overlapping gold spans differ. It adds no reinforcement learning.
+The history's loss is the combined objective. With `--span-f1-weight 0` (the default), loss
+computation, saved configurations and checkpoint identities retain the earlier CE-only path.
+
+CPU validation for this change creates a tiny model and runs both losses on 300 train /
+120 test answers, dev tuning, paired reporting and completed-run skips:
+
+```
+python tools/smoke_span_f1.py --data-dir RAGTruth --work-dir work_test/span_f1
+python -m pytest tests -q -p no:cacheprovider
+```
+
+No full-GPU claim follows from this check. This is one screening seed; replication and the
+later context/pretraining/summary changes remain separate experiments after results are returned.
+
+## Completed experiment: Part C
 
 Open `colab/part_c.ipynb` after pushing the reviewed commits to **fix/runnable-pipeline**.
 It clones that branch into `/content/tse` and calls `hallu_poc/poc.py` from there.
@@ -15,6 +72,8 @@ not the whole notebook; it becomes more useful after a few batches. Resumed runs
 start their bars at the saved position. To update an already-open Colab session,
 push the new commit, let the active experiment finish, then run Part C's optional
 code-update cell before starting the next experiment.
+Subprocess output is forwarded through notebook Python, with explicit table rendering,
+so completed results remain visible even when the notebook does not capture child file descriptors.
 
 Run Part C's experiment cells individually:
 

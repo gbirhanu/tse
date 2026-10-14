@@ -9,6 +9,7 @@ All new runs save checked, resumable outputs in --work-dir. Repeating the same
 command skips finished work; changed configurations require a new run name.
 """
 import argparse
+import math
 import os
 import re
 import sys
@@ -201,6 +202,14 @@ def cmd_train(args, p):
               'gradient_checkpointing': args.gradient_checkpointing,
               'data': {split: sample_fingerprint(samples)
                        for split, samples in [('train', train), ('dev', dev), ('test', test)]}}
+    # Omit disabled-loss fields so pre-existing CE-only runs and checkpoints
+    # still match their original configuration and can be resumed/skipped.
+    loss_config = {}
+    if args.span_f1_weight:
+        from hallu.losses import SPAN_F1_VERSION
+        loss_config = {'span_f1_weight': args.span_f1_weight,
+                       'span_f1_version': SPAN_F1_VERSION}
+        config.update(loss_config)
     training_path = os.path.join(p['results'], f'{args.name}_training.json')
     outputs = [_pred_path(p, args.name, split) for split in ('dev', 'test')] + [training_path]
     done, finished = _start(p, args.name, 'train', config, outputs)
@@ -211,16 +220,21 @@ def cmd_train(args, p):
     checkpoint_dir = os.path.join(p['models'], args.name)
     print(f'Training {args.base}, {args.targets}, seed {args.seed}: {len(train)} train, '
           f'{len(dev)} dev, {len(test)} test answers on {device}.')
+    if loss_config:
+        print(f'Loss: answer-token cross-entropy + {args.span_f1_weight:g} × '
+              f'character soft-F1 surrogate ({SPAN_F1_VERSION}).')
     tok, model, history = encoder.train(
         args.base, train, dev, targets=args.targets, epochs=args.epochs, lr=args.lr,
         max_length=args.max_length, batch_tokens=args.batch_tokens, seed=args.seed,
         device=device, fp16=not args.no_fp16, checkpoint_dir=checkpoint_dir,
-        checkpoint_every=args.checkpoint_every, gradient_checkpointing=args.gradient_checkpointing)
+        checkpoint_every=args.checkpoint_every, gradient_checkpointing=args.gradient_checkpointing,
+        span_f1_weight=args.span_f1_weight)
     metadata = {'model': args.base, 'training_scope': 'train_without_dev',
                 'targets': args.targets, 'seed': args.seed, 'max_length': args.max_length,
                 'tokenizer_hash': fingerprint_tokenizer(tok), 'run_config': fingerprint(config),
                 'train_fingerprint': sample_fingerprint(train), 'dev_fingerprint': sample_fingerprint(dev),
                 'soft_version': 'legacy', 'kind': 'trained'}
+    metadata.update(loss_config)
     best_dir = os.path.join(checkpoint_dir, 'best')
     atomic_write(os.path.join(best_dir, 'hallu_run.json'), metadata)
     atomic_write(training_path, {'base': args.base, 'targets': args.targets,
@@ -447,6 +461,8 @@ def main():
     ap.add_argument('--model', default=PUBLISHED_LD)
     ap.add_argument('--base', default='answerdotai/ModernBERT-base')
     ap.add_argument('--targets', choices=['hard', 'soft'], default='hard')
+    ap.add_argument('--span-f1-weight', type=float, default=0.0,
+                    help='train only: CE + weight × character soft-F1 surrogate (default: disabled)')
     ap.add_argument('--epochs', type=int, default=3)
     ap.add_argument('--lr', type=float, default=2e-5)
     ap.add_argument('--seed', type=int, default=42)
@@ -468,6 +484,10 @@ def main():
     ap.add_argument('--test-limit', type=int, help='about N test answers; marks results as smoke tests')
     ap.add_argument('--compare', nargs=2, metavar=('RUN_A', 'RUN_B'))
     args = ap.parse_args()
+    if not math.isfinite(args.span_f1_weight) or args.span_f1_weight < 0:
+        ap.error('--span-f1-weight must be finite and nonnegative')
+    if args.span_f1_weight and args.step != 'train':
+        ap.error('--span-f1-weight applies only to train')
     if args.step != 'report' and not args.name:
         ap.error('--name is required')
     names = ([args.name] if args.name else []) + (args.members or []) + (args.compare or [])

@@ -6,6 +6,7 @@ with only the prompt truncated, and a label only on answer tokens.
 """
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import random
@@ -21,6 +22,7 @@ from transformers import (AutoModelForTokenClassification, AutoTokenizer,
 
 from hallu import soft
 from hallu.decoding import BASELINE, decode_all
+from hallu.losses import SPAN_F1_VERSION, character_targets, soft_span_f1_loss
 from hallu.progress import progress
 from hallu.scoring import score
 
@@ -226,12 +228,17 @@ def _export_best(tok, model, directory):
 def train(name, train_samples, dev_samples, targets='hard', epochs=3, lr=2e-5,
           max_length=4096, batch_tokens=8192, seed=42, device='cpu', fp16=True,
           warmup=0.1, log=print, checkpoint_dir=None, checkpoint_every=200,
-          gradient_checkpointing=False):
+          gradient_checkpointing=False, span_f1_weight=0.0):
     """
     Fine-tunes `name` as a 2-class token classifier on answer tokens.
     targets='hard': 0/1 labels (LettuceDetect). targets='soft': lever 2.
     The loss is the same in both runs: cross-entropy against the target
     probability y, -(y log p1 + (1 - y) log p0), averaged over answer tokens.
+    A positive span_f1_weight adds that weight times the batch-pooled,
+    character-weighted soft-F1 surrogate from hallu.losses. This auxiliary uses
+    gold character unions even when CE uses soft targets. It does not replace
+    the LD evaluator. The default zero preserves the original CE path and
+    checkpoint identities, including compatibility with earlier checkpoints.
     Keeps the epoch with the best dev span F1 (LettuceDetect scorer, t = 0.5).
 
     With checkpoint_dir, latest.pt holds the complete training state. Repeating
@@ -245,6 +252,8 @@ def train(name, train_samples, dev_samples, targets='hard', epochs=3, lr=2e-5,
     """
     if epochs < 1 or not train_samples or not dev_samples:
         raise ValueError('Training requires epochs >= 1 and non-empty train/dev samples')
+    if not math.isfinite(span_f1_weight) or span_f1_weight < 0:
+        raise ValueError('span_f1_weight must be finite and nonnegative')
     if batch_tokens < 1:
         raise ValueError('batch_tokens must be positive')
     if checkpoint_dir is not None and checkpoint_every < 1:
@@ -261,10 +270,13 @@ def train(name, train_samples, dev_samples, targets='hard', epochs=3, lr=2e-5,
             model.config.use_cache = False
     t0 = time.time()
     data = []
+    character_data = [] if span_f1_weight > 0 else None
     for s in progress(train_samples, desc='Preparing training data', unit='answers'):
         ids, ans, offs = encode(tok, s['prompt'], s['answer'], max_length)
         y = soft.token_targets(s['answer'], s['spans'], offs, kind=targets)
         data.append((ids, ans, y))
+        if character_data is not None:
+            character_data.append(character_targets(s['answer'], s['spans'], offs))
     dev_encs = [encode(tok, s['prompt'], s['answer'], max_length)
                 for s in progress(dev_samples, desc='Preparing dev data', unit='answers')]
     lengths = [len(d[0]) for d in data]
@@ -302,6 +314,9 @@ def train(name, train_samples, dev_samples, targets='hard', epochs=3, lr=2e-5,
                     'train': _sample_fingerprint(train_samples),
                     'dev': _sample_fingerprint(dev_samples),
                     'train_encodings': _rows_fingerprint(data), 'dev_encodings': _rows_fingerprint(dev_encs)}
+        if span_f1_weight > 0:
+            identity.update({'span_f1_weight': span_f1_weight, 'span_f1_version': SPAN_F1_VERSION,
+                             'character_targets': _rows_fingerprint(character_data)})
         if checkpoint_path.exists():
             state = torch.load(checkpoint_path, map_location='cpu', weights_only=False)
             previous = state.get('identity', {})
@@ -365,6 +380,12 @@ def train(name, train_samples, dev_samples, targets='hard', epochs=3, lr=2e-5,
                 logits = model(input_ids=ids, attention_mask=mask).logits
             logp = torch.log_softmax(logits.float()[rows, cols], -1)
             loss = -(y * logp[:, 1] + (1 - y) * logp[:, 0]).mean()
+            if span_f1_weight > 0:
+                weights = torch.cat([torch.tensor(character_data[i][0], dtype=torch.float32)
+                                     for i in b]).to(device)
+                gold_fractions = torch.cat([torch.tensor(character_data[i][1], dtype=torch.float32)
+                                            for i in b]).to(device)
+                loss = loss + span_f1_weight * soft_span_f1_loss(logp[:, 1].exp(), weights, gold_fractions)
             opt.zero_grad(set_to_none=True)
             scaler.scale(loss).backward()
             scaler.unscale_(opt)
